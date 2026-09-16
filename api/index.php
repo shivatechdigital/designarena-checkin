@@ -121,8 +121,9 @@ try {
             $discountType = $body['discountType'] === 'fixed' ? 'fixed' : 'percentage';
             $discountValue = (int)$body['discountValue'];
             if ($discountValue < 1 || ($discountType === 'percentage' && $discountValue > 100)) json_response(['error' => 'Enter a valid discount value.'], 422);
-            $stmt = db()->prepare('INSERT INTO coupons (code,discount_type,discount_value,minimum_amount,active) VALUES (?,?,?,?,?)');
-            $stmt->execute([strtoupper(trim((string)$body['code'])), $discountType, $discountValue, (int)($body['minimumAmount'] ?? 0), !empty($body['active']) ? 1 : 0]);
+            $legacyPercent = $discountType === 'percentage' ? $discountValue : 1;
+            $stmt = db()->prepare('INSERT INTO coupons (code,discount_type,discount_value,discount_percent,minimum_amount,active) VALUES (?,?,?,?,?,?)');
+            $stmt->execute([strtoupper(trim((string)$body['code'])), $discountType, $discountValue, $legacyPercent, (int)($body['minimumAmount'] ?? 0), !empty($body['active']) ? 1 : 0]);
             $stmt = db()->prepare('SELECT * FROM coupons WHERE id=?'); $stmt->execute([(int)db()->lastInsertId()]);
             json_response(coupon_from_row($stmt->fetch()), 201);
         }
@@ -131,8 +132,9 @@ try {
                     $discountType = $body['discountType'] === 'fixed' ? 'fixed' : 'percentage';
                     $discountValue = (int)$body['discountValue'];
                     if ($discountValue < 1 || ($discountType === 'percentage' && $discountValue > 100)) json_response(['error' => 'Enter a valid discount value.'], 422);
-                    $stmt = db()->prepare('UPDATE coupons SET code=?, discount_type=?, discount_value=?, minimum_amount=?, active=? WHERE id=?');
-                    $stmt->execute([strtoupper(trim((string)$body['code'])), $discountType, $discountValue, (int)($body['minimumAmount'] ?? 0), !empty($body['active']) ? 1 : 0, (int)$body['id']]);
+                    $legacyPercent = $discountType === 'percentage' ? $discountValue : 1;
+                    $stmt = db()->prepare('UPDATE coupons SET code=?, discount_type=?, discount_value=?, discount_percent=?, minimum_amount=?, active=? WHERE id=?');
+                    $stmt->execute([strtoupper(trim((string)$body['code'])), $discountType, $discountValue, $legacyPercent, (int)($body['minimumAmount'] ?? 0), !empty($body['active']) ? 1 : 0, (int)$body['id']]);
                         $stmt = db()->prepare('SELECT * FROM coupons WHERE id=?'); $stmt->execute([(int)$body['id']]);
                         json_response(coupon_from_row($stmt->fetch()));
                 }
