@@ -1,12 +1,13 @@
 ﻿const { useState, useEffect, useMemo } = React;
 
     const PAGE_PATHS = {
-      home: 'index.html',
-      rooms: 'rooms.html',
-      about: 'aboutus.html',
-      feedback: 'feedback.html',
-      contact: 'contact.html',
-      admin: 'admin.html'
+      home: '/',
+      rooms: '/rooms',
+      about: '/aboutus',
+      feedback: '/feedback',
+      gallery: '/gallery',
+      contact: '/contact',
+      admin: '/admin'
     };
 
     const navigateToPage = (page) => {
@@ -426,6 +427,7 @@
                 }}
               />
             )}
+            {currentPage === 'gallery' && <GalleryPage />}
             {currentPage === 'admin' && (
               <AdminPanel 
                 rooms={rooms}
@@ -516,9 +518,9 @@
               <button 
                 onClick={() => setCurrentPage('admin')} 
                 className="text-[11px] bg-forest-800 hover:bg-forest-500 text-amber-300 px-2.5 py-0.5 rounded transition font-mono"
-                title="Manage bookings, MySQL database & contents"
+                title="Staff login"
               >
-                🔐 Staff Admin
+                Login
               </button>
             </div>
           </div>
@@ -532,14 +534,14 @@
                 className="cursor-pointer flex items-center gap-3 group"
               >
                 <div className="w-11 h-11 rounded-2xl bg-forest-900 text-amber-400 flex items-center justify-center font-serif text-2xl font-bold shadow-md shadow-forest-900/20 group-hover:scale-105 transition transform overflow-hidden">{hotelConfig.logoUrl ? <img src={hotelConfig.logoUrl} alt={`${hotelConfig.name || 'Checkinn Homes'} logo`} className="w-full h-full object-contain bg-white p-1" /> : 'C'}</div>
-                <div>
+                {!hotelConfig.logoUrl && <div>
                   <h1 className="font-serif text-2xl font-bold tracking-tight text-forest-950 leading-tight">
                     Checkinn <span className="text-amber-600">Homes</span>
                   </h1>
                   <p className="text-[11px] font-semibold text-stone-500 uppercase tracking-widest -mt-0.5">
                     Upper Tapovan • Rishikesh
                   </p>
-                </div>
+                </div>}
               </div>
 
               {/* Desktop Nav Items */}
@@ -548,6 +550,7 @@
                   { id: 'home', label: 'Home' },
                   { id: 'rooms', label: 'Our Rooms' },
                   { id: 'about', label: 'About Us' },
+                  { id: 'gallery', label: 'Gallery' },
                   { id: 'feedback', label: 'Guest Stories' },
                   { id: 'contact', label: 'Contact & Map' },
                 ].map((item) => {
@@ -618,9 +621,10 @@
                 { id: 'home', label: 'Home' },
                 { id: 'rooms', label: 'Our Rooms' },
                 { id: 'about', label: 'About Us' },
+                { id: 'gallery', label: 'Gallery' },
                 { id: 'feedback', label: 'Guest Feedback' },
                 { id: 'contact', label: 'Contact Us' },
-                { id: 'admin', label: '🔐 Hostinger Admin Panel' },
+                { id: 'admin', label: 'Login' },
               ].map((item) => (
                 <button
                   key={item.id}
@@ -1198,6 +1202,21 @@
           </div>
         </div>
       );
+    }
+
+    // --- GALLERY PAGE VIEW ---
+    function GalleryPage() {
+      const [activeTab, setActiveTab] = useState('all');
+      const images = [
+        'https://checkinnhomes.com/wp-content/uploads/2026/03/JKS01209-2-1024x683.jpg',
+        'https://checkinnhomes.com/wp-content/uploads/2026/03/JKS01206-scaled.jpg',
+        'https://checkinnhomes.com/wp-content/uploads/2026/03/JKS01304-scaled.jpg',
+        'https://checkinnhomes.com/wp-content/uploads/2026/03/JKS01298-scaled.jpg',
+        'https://checkinnhomes.com/wp-content/uploads/2026/03/JKS01284-scaled.jpg',
+        'https://checkinnhomes.com/wp-content/uploads/2026/03/JKS01244-scaled.jpg'
+      ];
+      const videos = ['https://www.youtube.com/embed/Scxs7L0vhZ4', 'https://www.youtube.com/embed/1La4QzGeaaQ'];
+      return <div className="bg-[#faf7f2] min-h-screen py-14 sm:py-20"><div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"><div className="max-w-2xl mb-10"><span className="text-amber-600 font-bold text-xs uppercase tracking-widest">Checkinn Homes</span><h1 className="font-serif text-4xl sm:text-5xl font-bold text-forest-950 mt-3">Gallery</h1><p className="text-stone-600 mt-4">A closer look at our rooms, spaces, and the Tapovan surroundings.</p></div><div className="flex gap-2 border-b border-stone-200 mb-8">{[['all', 'All'], ['images', 'Images'], ['videos', 'Videos']].map(([id, label]) => <button key={id} onClick={() => setActiveTab(id)} className={`px-5 py-3 text-sm font-bold border-b-2 ${activeTab === id ? 'border-forest-900 text-forest-900' : 'border-transparent text-stone-500'}`}>{label}</button>)}</div>{activeTab !== 'videos' && <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">{images.map((image, index) => <img key={image} src={image} alt={`Checkinn Homes gallery ${index + 1}`} className="w-full aspect-[4/3] object-cover rounded-lg shadow-sm" loading="lazy" />)}</div>}{activeTab === 'all' && <h2 className="font-serif text-3xl font-bold text-forest-950 mt-14 mb-6">Videos</h2>}{activeTab !== 'images' && <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">{videos.map((video, index) => <div key={video} className="aspect-video bg-forest-950 rounded-lg overflow-hidden"><iframe className="w-full h-full" src={video} title={`Rishikesh video ${index + 1}`} loading="lazy" allowFullScreen></iframe></div>)}</div>}</div></div>;
     }
 
     // --- ABOUT PAGE VIEW ---
@@ -2878,7 +2897,7 @@
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-5xl">
-                  <label className="block md:col-span-2"><span className="block text-xs font-bold uppercase tracking-wide text-slate-500 mb-2">Property Logo URL</span><div className="flex flex-col sm:flex-row gap-3"><input type="url" value={hotelConfig.logoUrl || ''} onChange={(event) => setHotelConfig({ ...hotelConfig, logoUrl: event.target.value })} placeholder="https://example.com/logo.png" className="flex-1 px-4 py-3 rounded-lg border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600" /><label className="cursor-pointer bg-forest-900 text-white px-4 py-3 rounded-lg text-sm font-bold text-center"><input type="file" accept="image/jpeg,image/png,image/webp" onChange={uploadPropertyLogo} className="sr-only" />Upload Logo</label></div>{hotelConfig.logoUrl && <img src={hotelConfig.logoUrl} alt="Current property logo" className="mt-3 h-16 max-w-48 object-contain object-left border border-slate-200 rounded-lg p-2" />}</label>
+                  <label className="block md:col-span-2"><span className="block text-xs font-bold uppercase tracking-wide text-slate-500 mb-2">Property Logo URL</span><div className="flex flex-col sm:flex-row gap-3"><input type="url" value={hotelConfig.logoUrl || ''} onChange={(event) => setHotelConfig({ ...hotelConfig, logoUrl: event.target.value })} placeholder="https://example.com/logo.png" className="flex-1 px-4 py-3 rounded-lg border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600" /><label className="cursor-pointer bg-forest-900 text-white px-4 py-3 rounded-lg text-sm font-bold text-center"><input type="file" accept="image/jpeg,image/png,image/webp" onChange={uploadPropertyLogo} className="sr-only" />Upload Logo</label></div>{hotelConfig.logoUrl && <div className="mt-3 flex items-center gap-3"><img src={hotelConfig.logoUrl} alt="Current property logo" className="h-16 max-w-48 object-contain object-left border border-slate-200 rounded-lg p-2" /><button type="button" onClick={() => setHotelConfig({ ...hotelConfig, logoUrl: '' })} className="text-xs font-bold text-red-600 border border-red-200 rounded-lg px-3 py-2 hover:bg-red-50">Remove Logo</button></div>}</label>
                   {[
                     { key: 'name', label: 'Property Name', type: 'text' },
                     { key: 'tagline', label: 'Tagline', type: 'text' },

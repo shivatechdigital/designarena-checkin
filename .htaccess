@@ -1,0 +1,28 @@
+RewriteEngine On
+
+# Preserve real files and folders, including /api.
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+RewriteRule ^$ index.html [L]
+RewriteRule ^rooms/?$ rooms.html [L]
+RewriteRule ^aboutus/?$ aboutus.html [L]
+RewriteRule ^feedback/?$ feedback.html [L]
+RewriteRule ^gallery/?$ gallery.html [L]
+RewriteRule ^contact/?$ contact.html [L]
+RewriteRule ^admin/?$ admin.html [L]
+
+# Redirect legacy page URLs to clean URLs.
+RewriteCond %{THE_REQUEST} \s/+index\.html[?\s] [NC]
+RewriteRule ^index\.html$ / [R=301,L]
+RewriteCond %{THE_REQUEST} \s/+rooms\.html[?\s] [NC]
+RewriteRule ^rooms\.html$ /rooms [R=301,L]
+RewriteCond %{THE_REQUEST} \s/+aboutus\.html[?\s] [NC]
+RewriteRule ^aboutus\.html$ /aboutus [R=301,L]
+RewriteCond %{THE_REQUEST} \s/+feedback\.html[?\s] [NC]
+RewriteRule ^feedback\.html$ /feedback [R=301,L]
+RewriteCond %{THE_REQUEST} \s/+contact\.html[?\s] [NC]
+RewriteRule ^contact\.html$ /contact [R=301,L]
+RewriteCond %{THE_REQUEST} \s/+admin\.html[?\s] [NC]
+RewriteRule ^admin\.html$ /admin [R=301,L]
