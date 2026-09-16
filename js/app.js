@@ -1141,6 +1141,9 @@
                   <p>
                     From high-speed fiber internet for your workstation to piping hot geysers after an evening Ganga Aarti, every corner of Checkinn Homes is maintained with love and care.
                   </p>
+                  <p>
+                    We welcome guests for quick weekend breaks as well as longer yoga courses and workations. Our team stays available throughout your visit, whether you need help planning an early-morning temple trip, finding a trusted cab, or simply choosing a quiet cafe for the afternoon.
+                  </p>
                 </div>
 
                 <div className="mt-8 flex gap-4">
@@ -1167,6 +1170,65 @@
                 </div>
               </div>
             </div>
+
+            {/* Stay Experience */}
+            <section className="mb-20">
+              <div className="max-w-3xl mb-10">
+                <span className="text-amber-600 font-bold text-xs uppercase tracking-widest">More Than a Room</span>
+                <h2 className="font-serif text-3xl sm:text-4xl font-bold text-forest-950 mt-2 mb-4">
+                  A Stay Designed Around Your Rishikesh Journey
+                </h2>
+                <p className="text-stone-600 text-sm sm:text-base leading-relaxed">
+                  Every guest arrives with a different plan. Some come to slow down, some to complete a yoga course, and others to explore the river and mountains. We keep the experience flexible, comfortable, and genuinely local from check-in to departure.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 border-y border-stone-200 py-10">
+                <div>
+                  <span className="text-3xl" aria-hidden="true">🛏️</span>
+                  <h3 className="font-serif text-xl font-bold text-forest-950 mt-4 mb-2">Rest Well</h3>
+                  <p className="text-sm text-stone-600 leading-relaxed">
+                    Comfortable beds, fresh linen, private and shared room choices, hot water, and quiet nights help you recover after a full day outdoors.
+                  </p>
+                </div>
+                <div>
+                  <span className="text-3xl" aria-hidden="true">💻</span>
+                  <h3 className="font-serif text-xl font-bold text-forest-950 mt-4 mb-2">Stay Connected</h3>
+                  <p className="text-sm text-stone-600 leading-relaxed">
+                    Reliable 100 Mbps fibre Wi-Fi and practical workspaces make longer stays easy for remote professionals, creators, and students.
+                  </p>
+                </div>
+                <div>
+                  <span className="text-3xl" aria-hidden="true">🧭</span>
+                  <h3 className="font-serif text-xl font-bold text-forest-950 mt-4 mb-2">Explore Like a Local</h3>
+                  <p className="text-sm text-stone-600 leading-relaxed">
+                    Ask us about waterfall trails, rafting, yoga classes, scooter rentals, airport transfers, and honest neighborhood recommendations.
+                  </p>
+                </div>
+              </div>
+            </section>
+
+            {/* Neighborhood */}
+            <section className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center mb-20 bg-forest-950 text-white overflow-hidden">
+              <img
+                src="https://images.unsplash.com/photo-1518002171953-a080ee817e1f?auto=format&fit=crop&w=1000&q=85"
+                alt="Ganga valley and Himalayan landscape near Tapovan"
+                className="w-full h-80 lg:h-full min-h-[380px] object-cover"
+              />
+              <div className="px-7 pb-10 lg:py-12 lg:pr-12 lg:pl-2">
+                <span className="text-amber-400 font-bold text-xs uppercase tracking-widest">Our Neighborhood</span>
+                <h2 className="font-serif text-3xl sm:text-4xl font-bold mt-2 mb-5">Upper Tapovan at Your Doorstep</h2>
+                <p className="text-stone-300 text-sm leading-relaxed mb-6">
+                  Checkinn Homes sits near Secret Waterfall Road, close to the experiences that make Rishikesh special while remaining removed from the busiest traffic. Start your morning with a forest walk, join a yoga class, work from a nearby cafe, or head toward the Ganga for sunset.
+                </p>
+                <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm text-stone-200">
+                  <li className="flex gap-2"><span className="text-amber-400">✓</span> Secret Waterfall trail nearby</li>
+                  <li className="flex gap-2"><span className="text-amber-400">✓</span> Cafes and restaurants on foot</li>
+                  <li className="flex gap-2"><span className="text-amber-400">✓</span> Easy access to yoga studios</li>
+                  <li className="flex gap-2"><span className="text-amber-400">✓</span> Local transport assistance</li>
+                </ul>
+              </div>
+            </section>
 
             {/* Our Values */}
             <div className="bg-white rounded-3xl p-8 sm:p-12 border border-stone-200 mb-16">

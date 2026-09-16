@@ -14,5 +14,6 @@ Exported from DesignArena
 ## Shared assets
 
 - Styles: `css/style.css`
-- Application: `js/app.js`
+- Application source: `js/app.js`
+- Browser-ready application: `js/app.bundle.js`
 - Tailwind configuration: `js/tailwind-config.js`
