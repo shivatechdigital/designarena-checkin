@@ -1,34 +1,3 @@
-var __defProp = Object.defineProperty;
-var __defProps = Object.defineProperties;
-var __getOwnPropDescs = Object.getOwnPropertyDescriptors;
-var __getOwnPropSymbols = Object.getOwnPropertySymbols;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __propIsEnum = Object.prototype.propertyIsEnumerable;
-var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
-var __spreadValues = (a, b) => {
-  for (var prop in b || (b = {}))
-    if (__hasOwnProp.call(b, prop))
-      __defNormalProp(a, prop, b[prop]);
-  if (__getOwnPropSymbols)
-    for (var prop of __getOwnPropSymbols(b)) {
-      if (__propIsEnum.call(b, prop))
-        __defNormalProp(a, prop, b[prop]);
-    }
-  return a;
-};
-var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
-var __objRest = (source, exclude) => {
-  var target = {};
-  for (var prop in source)
-    if (__hasOwnProp.call(source, prop) && exclude.indexOf(prop) < 0)
-      target[prop] = source[prop];
-  if (source != null && __getOwnPropSymbols)
-    for (var prop of __getOwnPropSymbols(source)) {
-      if (exclude.indexOf(prop) < 0 && __propIsEnum.call(source, prop))
-        target[prop] = source[prop];
-    }
-  return target;
-};
 const { useState, useEffect, useMemo } = React;
 const PAGE_PATHS = {
   home: "index.html",
@@ -52,7 +21,7 @@ let apiCsrfToken = "";
 async function apiRequest(resource, options = {}) {
   if (!API_ENABLED) return null;
   const method = options.method || "GET";
-  const headers = __spreadValues({}, options.headers || {});
+  const headers = { ...options.headers || {} };
   if (apiCsrfToken && !["GET", "HEAD"].includes(method)) headers["X-CSRF-Token"] = apiCsrfToken;
   if (options.body !== void 0 && !(options.body instanceof FormData)) headers["Content-Type"] = "application/json";
   const response = await fetch(`${API_ENDPOINT}?resource=${encodeURIComponent(resource)}`, {
@@ -226,7 +195,6 @@ const INITIAL_QUERIES = [
   }
 ];
 function App() {
-  var _a;
   const currentPage = document.body.dataset.page || "home";
   const setCurrentPage = navigateToPage;
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -242,7 +210,7 @@ function App() {
   const [bookings, setBookings] = useState(() => {
     const saved = localStorage.getItem("cih_bookings");
     const bookingData = saved ? JSON.parse(saved) : INITIAL_BOOKINGS;
-    return bookingData.map((booking) => booking.id === "CIH-7821" && booking.guestName === "Vikram Malhotra" ? __spreadProps(__spreadValues({}, booking), { guestName: "Shreya Gore" }) : booking);
+    return bookingData.map((booking) => booking.id === "CIH-7821" && booking.guestName === "Vikram Malhotra" ? { ...booking, guestName: "Shreya Gore" } : booking);
   });
   const [queries, setQueries] = useState(() => {
     const saved = localStorage.getItem("cih_queries");
@@ -297,7 +265,7 @@ function App() {
         if (data.rooms) setRooms(data.rooms);
         if (data.roomTypes) setRoomTypes(data.roomTypes);
         if (data.reviews) setReviews(data.reviews);
-        if (data.hotelConfig) setHotelConfig((current) => __spreadValues(__spreadValues({}, current), data.hotelConfig));
+        if (data.hotelConfig) setHotelConfig((current) => ({ ...current, ...data.hotelConfig }));
         if (data.bookings) setBookings(data.bookings);
         if (data.queries) setQueries(data.queries);
       } catch (error) {
@@ -355,7 +323,7 @@ function App() {
     checkIn: (/* @__PURE__ */ new Date()).toISOString().split("T")[0],
     checkOut: new Date(Date.now() + 864e5 * 2).toISOString().split("T")[0],
     guests: 2,
-    roomId: ((_a = rooms[0]) == null ? void 0 : _a.id) || "room-1"
+    roomId: rooms[0]?.id || "room-1"
   });
   const [viewingRoom, setViewingRoom] = useState(null);
   const [toast, setToast] = useState(null);
@@ -366,10 +334,10 @@ function App() {
   const openBookingEngine = (room = null) => {
     if (room) {
       setSelectedRoomForBooking(room);
-      setQuickBookForm((prev) => __spreadProps(__spreadValues({}, prev), { roomId: room.id }));
+      setQuickBookForm((prev) => ({ ...prev, roomId: room.id }));
     } else {
       setSelectedRoomForBooking(rooms[0]);
-      setQuickBookForm((prev) => __spreadProps(__spreadValues({}, prev), { roomId: rooms[0].id }));
+      setQuickBookForm((prev) => ({ ...prev, roomId: rooms[0].id }));
     }
     setBookingModalOpen(true);
   };
@@ -494,7 +462,6 @@ function App() {
   ));
 }
 function Navbar({ currentPage, setCurrentPage, mobileMenuOpen, setMobileMenuOpen, hotelConfig, openBookingEngine }) {
-  var _a;
   return /* @__PURE__ */ React.createElement("header", { className: "sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-stone-200 shadow-sm transition-all" }, /* @__PURE__ */ React.createElement("div", { className: "bg-forest-900 text-stone-200 text-xs py-1.5 px-4 sm:px-8 flex justify-between items-center border-b border-forest-800" }, /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-4" }, /* @__PURE__ */ React.createElement("span", { className: "flex items-center gap-1 font-medium" }, "\u{1F4CD} Secret Waterfall Rd, Upper Tapovan, Rishikesh"), /* @__PURE__ */ React.createElement("span", { className: "hidden md:inline text-forest-500" }, "|"), /* @__PURE__ */ React.createElement("span", { className: "hidden md:inline text-emerald-300" }, "\u{1F343} Peaceful Ganga Valley Stay")), /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-5" }, /* @__PURE__ */ React.createElement("a", { href: `tel:${hotelConfig.phone}`, className: "hover:text-amber-400 font-semibold flex items-center gap-1 transition" }, "\u{1F4DE} ", hotelConfig.phone), /* @__PURE__ */ React.createElement(
     "button",
     {
@@ -537,7 +504,7 @@ function Navbar({ currentPage, setCurrentPage, mobileMenuOpen, setMobileMenuOpen
   })), /* @__PURE__ */ React.createElement("div", { className: "hidden lg:flex items-center gap-3" }, /* @__PURE__ */ React.createElement(
     "a",
     {
-      href: `https://wa.me/${(_a = hotelConfig.whatsapp) == null ? void 0 : _a.replace(/[^0-9]/g, "")}?text=Hello%20Checkinn%20Homes,%20I%20want%20to%20inquire%20about%20staying%20in%20Tapovan`,
+      href: `https://wa.me/${hotelConfig.whatsapp?.replace(/[^0-9]/g, "")}?text=Hello%20Checkinn%20Homes,%20I%20want%20to%20inquire%20about%20staying%20in%20Tapovan`,
       target: "_blank",
       rel: "noreferrer",
       className: "px-3.5 py-2.5 rounded-full border border-stone-300 text-stone-700 hover:bg-stone-100 text-sm font-semibold flex items-center gap-1.5 transition"
@@ -598,7 +565,6 @@ function Navbar({ currentPage, setCurrentPage, mobileMenuOpen, setMobileMenuOpen
   ))));
 }
 function HomePage({ rooms, hotelConfig, reviews, setCurrentPage, openBookingEngine, setViewingRoom }) {
-  var _a;
   const [searchForm, setSearchForm] = useState({
     checkIn: (/* @__PURE__ */ new Date()).toISOString().split("T")[0],
     checkOut: new Date(Date.now() + 864e5 * 2).toISOString().split("T")[0],
@@ -626,7 +592,7 @@ function HomePage({ rooms, hotelConfig, reviews, setCurrentPage, openBookingEngi
       {
         type: "date",
         value: searchForm.checkIn,
-        onChange: (e) => setSearchForm(__spreadProps(__spreadValues({}, searchForm), { checkIn: e.target.value })),
+        onChange: (e) => setSearchForm({ ...searchForm, checkIn: e.target.value }),
         className: "w-full bg-transparent font-semibold text-sm text-stone-800 focus:outline-none cursor-pointer",
         required: true
       }
@@ -636,7 +602,7 @@ function HomePage({ rooms, hotelConfig, reviews, setCurrentPage, openBookingEngi
       {
         type: "date",
         value: searchForm.checkOut,
-        onChange: (e) => setSearchForm(__spreadProps(__spreadValues({}, searchForm), { checkOut: e.target.value })),
+        onChange: (e) => setSearchForm({ ...searchForm, checkOut: e.target.value }),
         className: "w-full bg-transparent font-semibold text-sm text-stone-800 focus:outline-none cursor-pointer",
         required: true
       }
@@ -645,7 +611,7 @@ function HomePage({ rooms, hotelConfig, reviews, setCurrentPage, openBookingEngi
       "select",
       {
         value: searchForm.guests,
-        onChange: (e) => setSearchForm(__spreadProps(__spreadValues({}, searchForm), { guests: Number(e.target.value) })),
+        onChange: (e) => setSearchForm({ ...searchForm, guests: Number(e.target.value) }),
         className: "w-full bg-transparent font-semibold text-sm text-stone-800 focus:outline-none cursor-pointer"
       },
       /* @__PURE__ */ React.createElement("option", { value: "1" }, "1 Solo Traveler"),
@@ -721,7 +687,7 @@ function HomePage({ rooms, hotelConfig, reviews, setCurrentPage, openBookingEngi
       className: "px-6 py-3 rounded-full bg-forest-900 text-amber-300 font-bold text-sm hover:bg-forest-800 transition"
     },
     "Write a Review or View More Stories \u270D\uFE0F"
-  )))), /* @__PURE__ */ React.createElement("section", { className: "relative min-h-[430px] flex items-center justify-center text-white overflow-hidden" }, /* @__PURE__ */ React.createElement("img", { src: "https://checkinnhomes.com/wp-content/uploads/2026/03/JKS01199-scaled.jpg", alt: "Check In Homes reception", className: "absolute inset-0 w-full h-full object-cover" }), /* @__PURE__ */ React.createElement("div", { className: "absolute inset-0 bg-forest-950/70" }), /* @__PURE__ */ React.createElement("div", { className: "relative max-w-5xl mx-auto px-4 py-16 text-center" }, /* @__PURE__ */ React.createElement("span", { className: "text-amber-400 font-bold text-lg" }, "Ready to Book Your Stay in Rishikesh?"), /* @__PURE__ */ React.createElement("h2", { className: "font-serif text-3xl sm:text-5xl font-bold mt-5 mb-4 leading-tight" }, "Experience comfort, great service, and the perfect location at Check In Homes."), /* @__PURE__ */ React.createElement("p", { className: "text-stone-200 text-sm sm:text-base mb-8" }, "Don't wait - secure your room now and enjoy a hassle-free stay with the best amenities and unbeatable prices."), /* @__PURE__ */ React.createElement("a", { href: `https://wa.me/${(_a = hotelConfig.whatsapp) == null ? void 0 : _a.replace(/[^0-9]/g, "")}?text=Hello%20Check%20In%20Homes,%20I%20want%20to%20book%20a%20room.`, target: "_blank", rel: "noreferrer", className: "inline-block bg-amber-500 hover:bg-amber-600 text-forest-950 font-bold px-8 py-3 transition" }, "Chat on WhatsApp"))));
+  )))), /* @__PURE__ */ React.createElement("section", { className: "relative min-h-[430px] flex items-center justify-center text-white overflow-hidden" }, /* @__PURE__ */ React.createElement("img", { src: "https://checkinnhomes.com/wp-content/uploads/2026/03/JKS01199-scaled.jpg", alt: "Check In Homes reception", className: "absolute inset-0 w-full h-full object-cover" }), /* @__PURE__ */ React.createElement("div", { className: "absolute inset-0 bg-forest-950/70" }), /* @__PURE__ */ React.createElement("div", { className: "relative max-w-5xl mx-auto px-4 py-16 text-center" }, /* @__PURE__ */ React.createElement("span", { className: "text-amber-400 font-bold text-lg" }, "Ready to Book Your Stay in Rishikesh?"), /* @__PURE__ */ React.createElement("h2", { className: "font-serif text-3xl sm:text-5xl font-bold mt-5 mb-4 leading-tight" }, "Experience comfort, great service, and the perfect location at Check In Homes."), /* @__PURE__ */ React.createElement("p", { className: "text-stone-200 text-sm sm:text-base mb-8" }, "Don't wait - secure your room now and enjoy a hassle-free stay with the best amenities and unbeatable prices."), /* @__PURE__ */ React.createElement("a", { href: `https://wa.me/${hotelConfig.whatsapp?.replace(/[^0-9]/g, "")}?text=Hello%20Check%20In%20Homes,%20I%20want%20to%20book%20a%20room.`, target: "_blank", rel: "noreferrer", className: "inline-block bg-amber-500 hover:bg-amber-600 text-forest-950 font-bold px-8 py-3 transition" }, "Chat on WhatsApp"))));
 }
 function RoomCard({ room, onBook, onViewDetails }) {
   const [amenitiesExpanded, setAmenitiesExpanded] = useState(false);
@@ -849,7 +815,6 @@ function AboutPage({ hotelConfig, setCurrentPage }) {
   ))));
 }
 function ContactPage({ hotelConfig, onAddQuery }) {
-  var _a;
   const [contactForm, setContactForm] = useState({
     name: "",
     email: "",
@@ -885,7 +850,7 @@ function ContactPage({ hotelConfig, onAddQuery }) {
   return /* @__PURE__ */ React.createElement("div", { className: "py-12 md:py-20" }, /* @__PURE__ */ React.createElement("div", { className: "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" }, /* @__PURE__ */ React.createElement("div", { className: "text-center max-w-3xl mx-auto mb-14" }, /* @__PURE__ */ React.createElement("span", { className: "text-amber-600 font-bold text-xs uppercase tracking-widest" }, "Contact Us"), /* @__PURE__ */ React.createElement("h1", { className: "font-serif text-4xl sm:text-5xl font-bold text-forest-950 mt-2 mb-4" }, "Get in Touch"), /* @__PURE__ */ React.createElement("p", { className: "text-stone-600 text-sm sm:text-base leading-relaxed" }, "Need help reaching Upper Tapovan or have queries about group retreats, bike rentals, or river rafting? We are always here.")), /* @__PURE__ */ React.createElement("div", { className: "grid grid-cols-1 lg:grid-cols-12 gap-10" }, /* @__PURE__ */ React.createElement("div", { className: "lg:col-span-5 space-y-6" }, /* @__PURE__ */ React.createElement("div", { className: "bg-white rounded-3xl p-7 border border-stone-200 shadow-sm" }, /* @__PURE__ */ React.createElement("h3", { className: "font-serif text-xl font-bold text-forest-950 mb-6" }, "Stay Address & Desk"), /* @__PURE__ */ React.createElement("div", { className: "space-y-6" }, /* @__PURE__ */ React.createElement("div", { className: "flex items-start gap-4" }, /* @__PURE__ */ React.createElement("div", { className: "w-10 h-10 rounded-xl bg-forest-50 text-forest-800 flex items-center justify-center shrink-0 text-lg" }, "\u{1F4CD}"), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h4", { className: "text-xs font-bold uppercase tracking-wider text-stone-400" }, "Address"), /* @__PURE__ */ React.createElement("p", { className: "text-sm font-semibold text-forest-950 mt-1 leading-snug" }, hotelConfig.location), /* @__PURE__ */ React.createElement("p", { className: "text-xs text-amber-600 font-medium mt-1" }, "Landmark: Behind Kundan Restaurant, Upper Tapovan"))), /* @__PURE__ */ React.createElement("div", { className: "flex items-start gap-4" }, /* @__PURE__ */ React.createElement("div", { className: "w-10 h-10 rounded-xl bg-forest-50 text-forest-800 flex items-center justify-center shrink-0 text-lg" }, "\u{1F4DE}"), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h4", { className: "text-xs font-bold uppercase tracking-wider text-stone-400" }, "Phone / WhatsApp"), /* @__PURE__ */ React.createElement("a", { href: `tel:${hotelConfig.phone}`, className: "text-sm font-bold text-forest-950 hover:text-amber-600 block mt-1" }, hotelConfig.phone), /* @__PURE__ */ React.createElement("p", { className: "text-xs text-stone-500" }, "Available 24/7 for guest assistance & check-ins"))), /* @__PURE__ */ React.createElement("div", { className: "flex items-start gap-4" }, /* @__PURE__ */ React.createElement("div", { className: "w-10 h-10 rounded-xl bg-forest-50 text-forest-800 flex items-center justify-center shrink-0 text-lg" }, "\u2709\uFE0F"), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h4", { className: "text-xs font-bold uppercase tracking-wider text-stone-400" }, "Official Email"), /* @__PURE__ */ React.createElement("a", { href: `mailto:${hotelConfig.email}`, className: "text-sm font-bold text-forest-950 hover:text-amber-600 block mt-1" }, hotelConfig.email)))), /* @__PURE__ */ React.createElement("div", { className: "mt-8 pt-6 border-t border-stone-100" }, /* @__PURE__ */ React.createElement(
     "a",
     {
-      href: `https://wa.me/${(_a = hotelConfig.whatsapp) == null ? void 0 : _a.replace(/[^0-9]/g, "")}?text=Hello%20Checkinn%20Homes,%20I%20have%20an%20inquiry`,
+      href: `https://wa.me/${hotelConfig.whatsapp?.replace(/[^0-9]/g, "")}?text=Hello%20Checkinn%20Homes,%20I%20have%20an%20inquiry`,
       target: "_blank",
       rel: "noreferrer",
       className: "w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl flex items-center justify-center gap-2 text-sm shadow transition"
@@ -898,7 +863,7 @@ function ContactPage({ hotelConfig, onAddQuery }) {
       type: "text",
       placeholder: "e.g. Rahul Sharma",
       value: contactForm.name,
-      onChange: (e) => setContactForm(__spreadProps(__spreadValues({}, contactForm), { name: e.target.value })),
+      onChange: (e) => setContactForm({ ...contactForm, name: e.target.value }),
       className: "w-full px-4 py-3 rounded-xl border border-stone-200 text-sm focus:outline-none focus:ring-2 focus:ring-forest-800 font-medium bg-stone-50/50",
       required: true
     }
@@ -908,7 +873,7 @@ function ContactPage({ hotelConfig, onAddQuery }) {
       type: "tel",
       placeholder: "e.g. +91 98765 43210",
       value: contactForm.phone,
-      onChange: (e) => setContactForm(__spreadProps(__spreadValues({}, contactForm), { phone: e.target.value })),
+      onChange: (e) => setContactForm({ ...contactForm, phone: e.target.value }),
       className: "w-full px-4 py-3 rounded-xl border border-stone-200 text-sm focus:outline-none focus:ring-2 focus:ring-forest-800 font-medium bg-stone-50/50",
       required: true
     }
@@ -918,14 +883,14 @@ function ContactPage({ hotelConfig, onAddQuery }) {
       type: "email",
       placeholder: "name@domain.com",
       value: contactForm.email,
-      onChange: (e) => setContactForm(__spreadProps(__spreadValues({}, contactForm), { email: e.target.value })),
+      onChange: (e) => setContactForm({ ...contactForm, email: e.target.value }),
       className: "w-full px-4 py-3 rounded-xl border border-stone-200 text-sm focus:outline-none focus:ring-2 focus:ring-forest-800 font-medium bg-stone-50/50"
     }
   )), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "block text-xs font-bold uppercase text-stone-500 mb-1" }, "Inquiry Topic"), /* @__PURE__ */ React.createElement(
     "select",
     {
       value: contactForm.subject,
-      onChange: (e) => setContactForm(__spreadProps(__spreadValues({}, contactForm), { subject: e.target.value })),
+      onChange: (e) => setContactForm({ ...contactForm, subject: e.target.value }),
       className: "w-full px-4 py-3 rounded-xl border border-stone-200 text-sm focus:outline-none focus:ring-2 focus:ring-forest-800 font-medium bg-stone-50/50 cursor-pointer"
     },
     /* @__PURE__ */ React.createElement("option", { value: "Room Booking Inquiry" }, "Room Booking Inquiry"),
@@ -939,7 +904,7 @@ function ContactPage({ hotelConfig, onAddQuery }) {
       rows: "4",
       placeholder: "Tell us about your dates, number of guests, or special requirements...",
       value: contactForm.message,
-      onChange: (e) => setContactForm(__spreadProps(__spreadValues({}, contactForm), { message: e.target.value })),
+      onChange: (e) => setContactForm({ ...contactForm, message: e.target.value }),
       className: "w-full px-4 py-3 rounded-xl border border-stone-200 text-sm focus:outline-none focus:ring-2 focus:ring-forest-800 font-medium bg-stone-50/50",
       required: true
     }
@@ -970,16 +935,14 @@ function ContactPage({ hotelConfig, onAddQuery }) {
   )))));
 }
 function FeedbackPage({ reviews, rooms, onAddReview }) {
-  var _a;
   const [reviewForm, setReviewForm] = useState({
     name: "",
     city: "",
     rating: 5,
-    room: ((_a = rooms[0]) == null ? void 0 : _a.name) || "Premium Room",
+    room: rooms[0]?.name || "Premium Room",
     comment: ""
   });
   const handleSubmitReview = (e) => {
-    var _a2;
     e.preventDefault();
     if (!reviewForm.name || !reviewForm.comment) {
       alert("Please enter your name and comments.");
@@ -1001,7 +964,7 @@ function FeedbackPage({ reviews, rooms, onAddReview }) {
       name: "",
       city: "",
       rating: 5,
-      room: ((_a2 = rooms[0]) == null ? void 0 : _a2.name) || "Premium Room",
+      room: rooms[0]?.name || "Premium Room",
       comment: ""
     });
   };
@@ -1011,7 +974,7 @@ function FeedbackPage({ reviews, rooms, onAddReview }) {
       type: "text",
       placeholder: "e.g. Priya & Ankit",
       value: reviewForm.name,
-      onChange: (e) => setReviewForm(__spreadProps(__spreadValues({}, reviewForm), { name: e.target.value })),
+      onChange: (e) => setReviewForm({ ...reviewForm, name: e.target.value }),
       className: "w-full px-4 py-2.5 rounded-xl border border-stone-200 text-sm font-medium bg-stone-50/60 focus:outline-none focus:ring-2 focus:ring-forest-800",
       required: true
     }
@@ -1021,14 +984,14 @@ function FeedbackPage({ reviews, rooms, onAddReview }) {
       type: "text",
       placeholder: "e.g. Mumbai, India",
       value: reviewForm.city,
-      onChange: (e) => setReviewForm(__spreadProps(__spreadValues({}, reviewForm), { city: e.target.value })),
+      onChange: (e) => setReviewForm({ ...reviewForm, city: e.target.value }),
       className: "w-full px-4 py-2.5 rounded-xl border border-stone-200 text-sm font-medium bg-stone-50/60 focus:outline-none focus:ring-2 focus:ring-forest-800"
     }
   )), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "block text-xs font-bold uppercase text-stone-500 mb-1" }, "Star Rating"), /* @__PURE__ */ React.createElement(
     "select",
     {
       value: reviewForm.rating,
-      onChange: (e) => setReviewForm(__spreadProps(__spreadValues({}, reviewForm), { rating: e.target.value })),
+      onChange: (e) => setReviewForm({ ...reviewForm, rating: e.target.value }),
       className: "w-full px-4 py-2.5 rounded-xl border border-stone-200 text-sm font-bold bg-stone-50/60 focus:outline-none focus:ring-2 focus:ring-forest-800 text-amber-600"
     },
     /* @__PURE__ */ React.createElement("option", { value: "5" }, "\u2B50\u2B50\u2B50\u2B50\u2B50 (5/5)"),
@@ -1040,7 +1003,7 @@ function FeedbackPage({ reviews, rooms, onAddReview }) {
     "select",
     {
       value: reviewForm.room,
-      onChange: (e) => setReviewForm(__spreadProps(__spreadValues({}, reviewForm), { room: e.target.value })),
+      onChange: (e) => setReviewForm({ ...reviewForm, room: e.target.value }),
       className: "w-full px-4 py-2.5 rounded-xl border border-stone-200 text-sm font-medium bg-stone-50/60 focus:outline-none focus:ring-2 focus:ring-forest-800"
     },
     rooms.map((r) => /* @__PURE__ */ React.createElement("option", { key: r.id, value: r.name }, r.name))
@@ -1050,7 +1013,7 @@ function FeedbackPage({ reviews, rooms, onAddReview }) {
       rows: "4",
       placeholder: "How was the room cleanliness, waterfall walk, staff assistance, and Wi-Fi speed?",
       value: reviewForm.comment,
-      onChange: (e) => setReviewForm(__spreadProps(__spreadValues({}, reviewForm), { comment: e.target.value })),
+      onChange: (e) => setReviewForm({ ...reviewForm, comment: e.target.value }),
       className: "w-full px-4 py-2.5 rounded-xl border border-stone-200 text-sm font-medium bg-stone-50/60 focus:outline-none focus:ring-2 focus:ring-forest-800",
       required: true
     }
@@ -1078,7 +1041,6 @@ function AdminPanel({
   setHotelConfig,
   showToast
 }) {
-  var _a, _b, _c;
   const [adminTab, setAdminTab] = useState("dashboard");
   const [bookingSearch, setBookingSearch] = useState("");
   const [bookingFilter, setBookingFilter] = useState("All");
@@ -1167,7 +1129,7 @@ function AdminPanel({
       if (editingRoomType) {
         if (API_ENABLED) await apiRequest("room-types", { method: "PUT", body: { oldName: editingRoomType, name: typeName } });
         setRoomTypes(roomTypes.map((type) => type === editingRoomType ? typeName : type));
-        setRooms(rooms.map((room) => room.type === editingRoomType ? __spreadProps(__spreadValues({}, room), { type: typeName }) : room));
+        setRooms(rooms.map((room) => room.type === editingRoomType ? { ...room, type: typeName } : room));
         showToast(`Room type renamed to "${typeName}".`);
       } else {
         if (API_ENABLED) await apiRequest("room-types", { method: "POST", body: { name: typeName } });
@@ -1203,17 +1165,16 @@ function AdminPanel({
   const addRoomImages = (images) => {
     setEditingRoom((room) => {
       const gallery = Array.from(new Set([...room.gallery || [], ...images].filter(Boolean)));
-      return __spreadProps(__spreadValues({}, room), { image: room.image || gallery[0] || "", gallery, newGalleryUrl: "" });
+      return { ...room, image: room.image || gallery[0] || "", gallery, newGalleryUrl: "" };
     });
   };
   const addRoomImageUrl = () => {
-    var _a2;
-    const imageUrl = (_a2 = editingRoom.newGalleryUrl) == null ? void 0 : _a2.trim();
+    const imageUrl = editingRoom.newGalleryUrl?.trim();
     if (!imageUrl) return;
     try {
       new URL(imageUrl);
       addRoomImages([imageUrl]);
-    } catch (e) {
+    } catch {
       showToast("Please enter a valid image URL.", "error");
     }
   };
@@ -1244,13 +1205,14 @@ function AdminPanel({
       const images = API_ENABLED ? await apiUploadImages(files) : await Promise.all(files.map(compressRoomImage));
       addRoomImages(images);
       showToast(`${images.length} photo${images.length === 1 ? "" : "s"} added.`);
-    } catch (e) {
+    } catch {
       showToast("One or more photos could not be added.", "error");
     }
     event.target.value = "";
   };
   const setMainRoomImage = (imageUrl) => {
-    setEditingRoom((room) => __spreadProps(__spreadValues({}, room), {
+    setEditingRoom((room) => ({
+      ...room,
       image: imageUrl,
       gallery: [imageUrl, ...(room.gallery || []).filter((image) => image !== imageUrl)]
     }));
@@ -1258,7 +1220,7 @@ function AdminPanel({
   const removeRoomImage = (imageUrl) => {
     setEditingRoom((room) => {
       const gallery = (room.gallery || []).filter((image) => image !== imageUrl);
-      return __spreadProps(__spreadValues({}, room), { gallery, image: room.image === imageUrl ? gallery[0] || "" : room.image });
+      return { ...room, gallery, image: room.image === imageUrl ? gallery[0] || "" : room.image };
     });
   };
   const exportBookings = () => {
@@ -1275,7 +1237,7 @@ function AdminPanel({
       booking.totalAmount,
       booking.status
     ]));
-    const csv = rows.map((row) => row.map((value) => `"${String(value != null ? value : "").replace(/"/g, '""')}"`).join(",")).join("\n");
+    const csv = rows.map((row) => row.map((value) => `"${String(value ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
     const link = document.createElement("a");
     link.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
     link.download = `checkinn-bookings-${(/* @__PURE__ */ new Date()).toISOString().split("T")[0]}.csv`;
@@ -1294,19 +1256,19 @@ function AdminPanel({
     }
   };
   const handleSaveRoom = async (e) => {
-    var _b2;
     e.preventDefault();
-    const _a2 = editingRoom, { isNew, amenitiesText, breakfastPrice, mealsPrice, newGalleryUrl } = _a2, roomData = __objRest(_a2, ["isNew", "amenitiesText", "breakfastPrice", "mealsPrice", "newGalleryUrl"]);
-    if (!roomData.image || !((_b2 = roomData.gallery) == null ? void 0 : _b2.length)) {
+    const { isNew, amenitiesText, breakfastPrice, mealsPrice, newGalleryUrl, ...roomData } = editingRoom;
+    if (!roomData.image || !roomData.gallery?.length) {
       showToast("Please add at least one room photo.", "error");
       return;
     }
     const roomOnlyPrice = Number(roomData.price) || 0;
     const gallery = Array.from(new Set([roomData.image, ...roomData.gallery].filter(Boolean)));
-    const normalizedRoom = __spreadProps(__spreadValues({}, roomData), {
+    const normalizedRoom = {
+      ...roomData,
       price: roomOnlyPrice,
       originalPrice: roomData.originalPrice ? Number(roomData.originalPrice) : null,
-      amenities: String(amenitiesText != null ? amenitiesText : roomData.amenities.join(",")).split(",").map((amenity) => amenity.trim()).filter(Boolean),
+      amenities: String(amenitiesText ?? roomData.amenities.join(",")).split(",").map((amenity) => amenity.trim()).filter(Boolean),
       image: roomData.image,
       gallery,
       mealPlans: [
@@ -1314,7 +1276,7 @@ function AdminPanel({
         breakfastPrice ? `With Breakfast (CP): \u20B9${Number(breakfastPrice).toLocaleString("en-IN")}` : null,
         mealsPrice ? `With Meals (MAP): \u20B9${Number(mealsPrice).toLocaleString("en-IN")}` : null
       ].filter(Boolean)
-    });
+    };
     try {
       const savedRoom = API_ENABLED ? await apiRequest("rooms", { method: isNew ? "POST" : "PUT", body: normalizedRoom }) : normalizedRoom;
       setRooms(isNew ? [...rooms, savedRoom] : rooms.map((room) => room.id === savedRoom.id ? savedRoom : room));
@@ -1339,7 +1301,7 @@ function AdminPanel({
   const updateBookingStatus = async (bookingId, newStatus) => {
     try {
       if (API_ENABLED) await apiRequest("bookings", { method: "PUT", body: { id: bookingId, status: newStatus } });
-      setBookings(bookings.map((b) => b.id === bookingId ? __spreadProps(__spreadValues({}, b), { status: newStatus }) : b));
+      setBookings(bookings.map((b) => b.id === bookingId ? { ...b, status: newStatus } : b));
       showToast(`Booking ${bookingId} status updated to ${newStatus}`);
     } catch (error) {
       showToast(error.message, "error");
@@ -1356,10 +1318,10 @@ function AdminPanel({
   };
   const toggleQueryStatus = async (queryId) => {
     const query = queries.find((item) => item.id === queryId);
-    const status = (query == null ? void 0 : query.status) === "Resolved" ? "New" : "Resolved";
+    const status = query?.status === "Resolved" ? "New" : "Resolved";
     try {
       if (API_ENABLED) await apiRequest("queries", { method: "PUT", body: { id: queryId, status } });
-      setQueries(queries.map((q) => q.id === queryId ? __spreadProps(__spreadValues({}, q), { status }) : q));
+      setQueries(queries.map((q) => q.id === queryId ? { ...q, status } : q));
       showToast("Query status updated.");
     } catch (error) {
       showToast(error.message, "error");
@@ -1378,7 +1340,7 @@ function AdminPanel({
     try {
       if (API_ENABLED) {
         const savedSettings = await apiRequest("settings", { method: "PUT", body: hotelConfig });
-        setHotelConfig((current) => __spreadValues(__spreadValues({}, current), savedSettings));
+        setHotelConfig((current) => ({ ...current, ...savedSettings }));
       }
       showToast("Property settings saved and published.");
     } catch (error) {
@@ -1386,7 +1348,6 @@ function AdminPanel({
     }
   };
   const testApiConnection = async () => {
-    var _a2;
     if (!API_ENABLED) {
       setApiConnectionStatus("Upload the project to demo.checkinnhomes.com to test MySQL.");
       return;
@@ -1394,7 +1355,7 @@ function AdminPanel({
     setApiConnectionStatus("Testing connection...");
     try {
       const data = await apiRequest("bootstrap");
-      setApiConnectionStatus(`Connected successfully. ${((_a2 = data.rooms) == null ? void 0 : _a2.length) || 0} rooms loaded from MySQL.`);
+      setApiConnectionStatus(`Connected successfully. ${data.rooms?.length || 0} rooms loaded from MySQL.`);
     } catch (error) {
       setApiConnectionStatus(`Connection failed: ${error.message}`);
     }
@@ -1411,7 +1372,7 @@ function AdminPanel({
         if (data.reviews) setReviews(data.reviews);
         if (data.bookings) setBookings(data.bookings);
         if (data.queries) setQueries(data.queries);
-        if (data.hotelConfig) setHotelConfig((current) => __spreadValues(__spreadValues({}, current), data.hotelConfig));
+        if (data.hotelConfig) setHotelConfig((current) => ({ ...current, ...data.hotelConfig }));
       } else {
         if (adminLoginForm.email.trim().toLowerCase() !== ADMIN_CREDENTIALS.email || adminLoginForm.password !== ADMIN_CREDENTIALS.password) {
           throw new Error("Incorrect email or password. Please try again.");
@@ -1444,7 +1405,7 @@ function AdminPanel({
     return /* @__PURE__ */ React.createElement("div", { className: "min-h-screen bg-forest-950 text-white flex items-center justify-center" }, /* @__PURE__ */ React.createElement("div", { className: "text-center" }, /* @__PURE__ */ React.createElement("div", { className: "w-12 h-12 border-4 border-amber-300 border-t-transparent rounded-full animate-spin mx-auto mb-4" }), /* @__PURE__ */ React.createElement("p", { className: "text-sm text-slate-300" }, "Checking secure session...")));
   }
   if (!isAdminAuthenticated) {
-    return /* @__PURE__ */ React.createElement("div", { className: "relative min-h-screen overflow-hidden bg-forest-950 text-white" }, /* @__PURE__ */ React.createElement("img", { src: ADMIN_LOGIN_BACKGROUND, alt: "Luxury hotel reception", className: "absolute inset-0 w-full h-full object-cover" }), /* @__PURE__ */ React.createElement("div", { className: "absolute inset-0 bg-gradient-to-r from-forest-950/95 via-forest-950/55 to-forest-950/25" }), /* @__PURE__ */ React.createElement("div", { className: "relative min-h-screen max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 py-10 flex items-center" }, /* @__PURE__ */ React.createElement("div", { className: "w-full grid grid-cols-1 lg:grid-cols-[1fr_460px] gap-12 lg:gap-20 items-end lg:items-center" }, /* @__PURE__ */ React.createElement("section", { className: "hidden lg:flex flex-col justify-end min-h-[620px] pb-8 max-w-xl" }, /* @__PURE__ */ React.createElement("span", { className: "text-amber-300 text-sm font-bold uppercase tracking-[0.2em]" }, "Hotel Management System"), /* @__PURE__ */ React.createElement("h1", { className: "font-serif text-5xl xl:text-6xl leading-[1.05] mt-4 mb-5" }, "Manage Your Hotel ", /* @__PURE__ */ React.createElement("span", { className: "block text-amber-300" }, "Smarter")), /* @__PURE__ */ React.createElement("p", { className: "text-slate-200 text-base leading-relaxed max-w-lg" }, "Streamline bookings, manage guests, rooms, pricing and revenue from one secure dashboard."), /* @__PURE__ */ React.createElement("div", { className: "grid grid-cols-3 gap-5 mt-8 pt-7 border-t border-white/20 text-xs text-slate-200" }, /* @__PURE__ */ React.createElement("span", null, "\u25A3 Easy Booking Management"), /* @__PURE__ */ React.createElement("span", null, "\u2659 Guest Management"), /* @__PURE__ */ React.createElement("span", null, "\u25A5 Room & Revenue Tracking"))), /* @__PURE__ */ React.createElement("section", { className: "w-full max-w-md mx-auto lg:mx-0 bg-[#0b223b]/95 border border-slate-400/30 shadow-2xl rounded-lg px-6 sm:px-10 py-9 sm:py-11 backdrop-blur-md" }, /* @__PURE__ */ React.createElement("div", { className: "text-center mb-8" }, /* @__PURE__ */ React.createElement("div", { className: "w-16 h-16 mx-auto rounded-lg bg-amber-300 text-forest-950 flex items-center justify-center font-serif text-4xl font-bold mb-4" }, "C"), /* @__PURE__ */ React.createElement("p", { className: "font-serif text-2xl tracking-[0.15em]" }, "CHECK IN HOMES"), /* @__PURE__ */ React.createElement("p", { className: "text-[10px] uppercase tracking-[0.35em] text-amber-300 mt-1" }, "Hotel Management System"), /* @__PURE__ */ React.createElement("h2", { className: "text-2xl font-bold mt-8" }, "Welcome Back!"), /* @__PURE__ */ React.createElement("p", { className: "text-sm text-slate-300 mt-2" }, "Sign in to your account to continue")), /* @__PURE__ */ React.createElement("form", { onSubmit: handleAdminLogin, className: "space-y-4" }, /* @__PURE__ */ React.createElement("label", { className: "block" }, /* @__PURE__ */ React.createElement("span", { className: "sr-only" }, "Admin email"), /* @__PURE__ */ React.createElement("input", { type: "email", value: adminLoginForm.email, onChange: (event) => setAdminLoginForm(__spreadProps(__spreadValues({}, adminLoginForm), { email: event.target.value })), placeholder: "Username or Email", autoComplete: "username", className: "w-full px-4 py-3.5 rounded-lg bg-white/5 border border-slate-400/60 text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-300", required: true })), /* @__PURE__ */ React.createElement("label", { className: "block relative" }, /* @__PURE__ */ React.createElement("span", { className: "sr-only" }, "Admin password"), /* @__PURE__ */ React.createElement("input", { type: showAdminPassword ? "text" : "password", value: adminLoginForm.password, onChange: (event) => setAdminLoginForm(__spreadProps(__spreadValues({}, adminLoginForm), { password: event.target.value })), placeholder: "Password", autoComplete: "current-password", className: "w-full px-4 py-3.5 pr-14 rounded-lg bg-white/5 border border-slate-400/60 text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-300", required: true }), /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => setShowAdminPassword((visible) => !visible), className: "absolute right-4 top-3.5 text-sm text-slate-300 hover:text-white", "aria-label": showAdminPassword ? "Hide password" : "Show password" }, showAdminPassword ? "Hide" : "Show")), /* @__PURE__ */ React.createElement("div", { className: "flex items-center justify-between text-xs text-slate-300" }, /* @__PURE__ */ React.createElement("label", { className: "flex items-center gap-2 cursor-pointer" }, /* @__PURE__ */ React.createElement("input", { type: "checkbox", checked: adminLoginForm.remember, onChange: (event) => setAdminLoginForm(__spreadProps(__spreadValues({}, adminLoginForm), { remember: event.target.checked })), className: "w-4 h-4 accent-amber-400" }), " Remember me"), /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => setAdminLoginError("Contact the website administrator to reset your password."), className: "text-amber-300 hover:underline" }, "Forgot password?")), adminLoginError && /* @__PURE__ */ React.createElement("div", { role: "alert", className: "bg-red-500/15 border border-red-400/40 text-red-200 rounded-lg px-4 py-3 text-xs" }, adminLoginError), /* @__PURE__ */ React.createElement("button", { type: "submit", className: "w-full bg-amber-300 hover:bg-amber-400 text-forest-950 font-extrabold py-3.5 rounded-lg shadow-lg transition" }, "Login")), /* @__PURE__ */ React.createElement("div", { className: "mt-8 pt-6 border-t border-slate-400/30 text-center text-xs text-slate-400" }, "Need help? Contact your administrator"), !API_ENABLED && /* @__PURE__ */ React.createElement("p", { className: "mt-3 text-center text-[10px] text-slate-500" }, "Local demo: admin@checkinnhomes.com / LocalDemo@2026")))));
+    return /* @__PURE__ */ React.createElement("div", { className: "relative min-h-screen overflow-hidden bg-forest-950 text-white" }, /* @__PURE__ */ React.createElement("img", { src: ADMIN_LOGIN_BACKGROUND, alt: "Luxury hotel reception", className: "absolute inset-0 w-full h-full object-cover" }), /* @__PURE__ */ React.createElement("div", { className: "absolute inset-0 bg-gradient-to-r from-forest-950/95 via-forest-950/55 to-forest-950/25" }), /* @__PURE__ */ React.createElement("div", { className: "relative min-h-screen max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 py-10 flex items-center" }, /* @__PURE__ */ React.createElement("div", { className: "w-full grid grid-cols-1 lg:grid-cols-[1fr_460px] gap-12 lg:gap-20 items-end lg:items-center" }, /* @__PURE__ */ React.createElement("section", { className: "hidden lg:flex flex-col justify-end min-h-[620px] pb-8 max-w-xl" }, /* @__PURE__ */ React.createElement("span", { className: "text-amber-300 text-sm font-bold uppercase tracking-[0.2em]" }, "Hotel Management System"), /* @__PURE__ */ React.createElement("h1", { className: "font-serif text-5xl xl:text-6xl leading-[1.05] mt-4 mb-5" }, "Manage Your Hotel ", /* @__PURE__ */ React.createElement("span", { className: "block text-amber-300" }, "Smarter")), /* @__PURE__ */ React.createElement("p", { className: "text-slate-200 text-base leading-relaxed max-w-lg" }, "Streamline bookings, manage guests, rooms, pricing and revenue from one secure dashboard."), /* @__PURE__ */ React.createElement("div", { className: "grid grid-cols-3 gap-5 mt-8 pt-7 border-t border-white/20 text-xs text-slate-200" }, /* @__PURE__ */ React.createElement("span", null, "\u25A3 Easy Booking Management"), /* @__PURE__ */ React.createElement("span", null, "\u2659 Guest Management"), /* @__PURE__ */ React.createElement("span", null, "\u25A5 Room & Revenue Tracking"))), /* @__PURE__ */ React.createElement("section", { className: "w-full max-w-md mx-auto lg:mx-0 bg-[#0b223b]/95 border border-slate-400/30 shadow-2xl rounded-lg px-6 sm:px-10 py-9 sm:py-11 backdrop-blur-md" }, /* @__PURE__ */ React.createElement("div", { className: "text-center mb-8" }, /* @__PURE__ */ React.createElement("div", { className: "w-16 h-16 mx-auto rounded-lg bg-amber-300 text-forest-950 flex items-center justify-center font-serif text-4xl font-bold mb-4" }, "C"), /* @__PURE__ */ React.createElement("p", { className: "font-serif text-2xl tracking-[0.15em]" }, "CHECK IN HOMES"), /* @__PURE__ */ React.createElement("p", { className: "text-[10px] uppercase tracking-[0.35em] text-amber-300 mt-1" }, "Hotel Management System"), /* @__PURE__ */ React.createElement("h2", { className: "text-2xl font-bold mt-8" }, "Welcome Back!"), /* @__PURE__ */ React.createElement("p", { className: "text-sm text-slate-300 mt-2" }, "Sign in to your account to continue")), /* @__PURE__ */ React.createElement("form", { onSubmit: handleAdminLogin, className: "space-y-4" }, /* @__PURE__ */ React.createElement("label", { className: "block" }, /* @__PURE__ */ React.createElement("span", { className: "sr-only" }, "Admin email"), /* @__PURE__ */ React.createElement("input", { type: "email", value: adminLoginForm.email, onChange: (event) => setAdminLoginForm({ ...adminLoginForm, email: event.target.value }), placeholder: "Username or Email", autoComplete: "username", className: "w-full px-4 py-3.5 rounded-lg bg-white/5 border border-slate-400/60 text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-300", required: true })), /* @__PURE__ */ React.createElement("label", { className: "block relative" }, /* @__PURE__ */ React.createElement("span", { className: "sr-only" }, "Admin password"), /* @__PURE__ */ React.createElement("input", { type: showAdminPassword ? "text" : "password", value: adminLoginForm.password, onChange: (event) => setAdminLoginForm({ ...adminLoginForm, password: event.target.value }), placeholder: "Password", autoComplete: "current-password", className: "w-full px-4 py-3.5 pr-14 rounded-lg bg-white/5 border border-slate-400/60 text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-300", required: true }), /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => setShowAdminPassword((visible) => !visible), className: "absolute right-4 top-3.5 text-sm text-slate-300 hover:text-white", "aria-label": showAdminPassword ? "Hide password" : "Show password" }, showAdminPassword ? "Hide" : "Show")), /* @__PURE__ */ React.createElement("div", { className: "flex items-center justify-between text-xs text-slate-300" }, /* @__PURE__ */ React.createElement("label", { className: "flex items-center gap-2 cursor-pointer" }, /* @__PURE__ */ React.createElement("input", { type: "checkbox", checked: adminLoginForm.remember, onChange: (event) => setAdminLoginForm({ ...adminLoginForm, remember: event.target.checked }), className: "w-4 h-4 accent-amber-400" }), " Remember me"), /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => setAdminLoginError("Contact the website administrator to reset your password."), className: "text-amber-300 hover:underline" }, "Forgot password?")), adminLoginError && /* @__PURE__ */ React.createElement("div", { role: "alert", className: "bg-red-500/15 border border-red-400/40 text-red-200 rounded-lg px-4 py-3 text-xs" }, adminLoginError), /* @__PURE__ */ React.createElement("button", { type: "submit", className: "w-full bg-amber-300 hover:bg-amber-400 text-forest-950 font-extrabold py-3.5 rounded-lg shadow-lg transition" }, "Login")), /* @__PURE__ */ React.createElement("div", { className: "mt-8 pt-6 border-t border-slate-400/30 text-center text-xs text-slate-400" }, "Need help? Contact your administrator"), !API_ENABLED && /* @__PURE__ */ React.createElement("p", { className: "mt-3 text-center text-[10px] text-slate-500" }, "Local demo: admin@checkinnhomes.com / LocalDemo@2026")))));
   }
   return /* @__PURE__ */ React.createElement("div", { className: "min-h-screen bg-[#f5f7fb] text-slate-800" }, /* @__PURE__ */ React.createElement("div", { className: "flex min-h-screen" }, /* @__PURE__ */ React.createElement("aside", { className: "hidden lg:flex w-64 shrink-0 bg-white border-r border-slate-200 px-5 py-7 flex-col sticky top-0 h-screen" }, /* @__PURE__ */ React.createElement("button", { onClick: () => navigateToPage("home"), className: "flex items-center gap-3 px-2 mb-10 text-left" }, /* @__PURE__ */ React.createElement("span", { className: "w-11 h-11 bg-forest-900 text-amber-300 flex items-center justify-center font-serif text-2xl font-bold rounded-lg" }, "C"), /* @__PURE__ */ React.createElement("span", null, /* @__PURE__ */ React.createElement("strong", { className: "block text-lg text-forest-950" }, "Check In Homes"), /* @__PURE__ */ React.createElement("small", { className: "text-slate-400" }, "Admin Portal"))), /* @__PURE__ */ React.createElement("nav", { className: "space-y-2", "aria-label": "Admin navigation" }, adminNavItems.map((item) => /* @__PURE__ */ React.createElement(
     "button",
@@ -1456,31 +1417,28 @@ function AdminPanel({
     /* @__PURE__ */ React.createElement("span", { className: `w-6 text-center text-lg ${adminTab === item.id ? "text-amber-300" : "text-emerald-600"}` }, item.icon),
     /* @__PURE__ */ React.createElement("span", null, item.label),
     item.count !== void 0 && /* @__PURE__ */ React.createElement("span", { className: `ml-auto text-[10px] px-2 py-0.5 rounded-full ${adminTab === item.id ? "bg-white/15" : "bg-slate-100 text-slate-500"}` }, item.count)
-  ))), /* @__PURE__ */ React.createElement("div", { className: "mt-auto border-t border-slate-100 pt-5" }, /* @__PURE__ */ React.createElement("button", { onClick: () => navigateToPage("home"), className: "w-full px-4 py-3 text-left text-sm font-semibold text-slate-500 hover:text-forest-900" }, "\u2190 View Website"), /* @__PURE__ */ React.createElement("button", { onClick: handleAdminLogout, className: "w-full px-4 py-3 text-left text-sm font-semibold text-red-500 hover:bg-red-50 rounded-lg" }, "\u21E5 Logout"), /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-3 px-4 pt-4" }, /* @__PURE__ */ React.createElement("span", { className: "w-9 h-9 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center font-bold" }, "A"), /* @__PURE__ */ React.createElement("span", null, /* @__PURE__ */ React.createElement("strong", { className: "block text-sm" }, "Property Admin"), /* @__PURE__ */ React.createElement("small", { className: "text-slate-400" }, "Administrator"))))), /* @__PURE__ */ React.createElement("div", { className: "min-w-0 flex-1" }, /* @__PURE__ */ React.createElement("header", { className: "sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-slate-200 px-4 sm:px-6 lg:px-8 py-4" }, /* @__PURE__ */ React.createElement("div", { className: "flex items-center justify-between gap-4" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("p", { className: "text-xs font-bold uppercase tracking-widest text-emerald-700" }, "Check In Homes"), /* @__PURE__ */ React.createElement("h1", { className: "text-xl sm:text-2xl font-extrabold text-forest-950" }, (_a = adminNavItems.find((item) => item.id === adminTab)) == null ? void 0 : _a.label)), /* @__PURE__ */ React.createElement("div", { className: "hidden sm:flex items-center gap-5" }, /* @__PURE__ */ React.createElement("div", { className: "relative" }, /* @__PURE__ */ React.createElement("span", { className: "absolute left-3 top-2.5 text-slate-400" }, "\u2315"), /* @__PURE__ */ React.createElement("input", { value: bookingSearch, onChange: (event) => setBookingSearch(event.target.value), onFocus: () => setAdminTab("bookings"), placeholder: "Search bookings...", className: "w-64 bg-slate-50 border border-slate-200 rounded-lg py-2 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600" })), /* @__PURE__ */ React.createElement("span", { className: "text-xs text-slate-500" }, (/* @__PURE__ */ new Date()).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })), /* @__PURE__ */ React.createElement("span", { className: "w-10 h-10 rounded-full bg-forest-900 text-amber-300 flex items-center justify-center font-bold" }, "A"))), /* @__PURE__ */ React.createElement("nav", { className: "lg:hidden flex gap-2 overflow-x-auto hide-scrollbar mt-4 pb-1", "aria-label": "Mobile admin navigation" }, adminNavItems.map((item) => /* @__PURE__ */ React.createElement("button", { key: item.id, onClick: () => setAdminTab(item.id), className: `shrink-0 px-3 py-2 rounded-lg text-xs font-bold ${adminTab === item.id ? "bg-forest-900 text-white" : "bg-slate-100 text-slate-600"}` }, item.icon, " ", item.label, item.count !== void 0 ? ` (${item.count})` : "")))), /* @__PURE__ */ React.createElement("main", { className: "max-w-[1600px] mx-auto p-4 sm:p-6 lg:p-8" }, adminTab === "dashboard" && /* @__PURE__ */ React.createElement("div", { className: "space-y-6" }, /* @__PURE__ */ React.createElement("div", { className: "flex flex-col sm:flex-row sm:items-end justify-between gap-4" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h2", { className: "text-2xl font-extrabold text-forest-950" }, "Welcome back, Admin"), /* @__PURE__ */ React.createElement("p", { className: "text-sm text-slate-500 mt-1" }, "Here is what is happening at Check In Homes today.")), /* @__PURE__ */ React.createElement("button", { onClick: exportBookings, className: "self-start bg-white border border-slate-200 px-4 py-2 rounded-lg text-sm font-bold text-slate-600 hover:border-emerald-600 hover:text-emerald-700" }, "\u21E9 Export Report")), /* @__PURE__ */ React.createElement("div", { className: "grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4" }, /* @__PURE__ */ React.createElement("div", { className: "bg-rose-50 p-5 rounded-lg border border-rose-100" }, /* @__PURE__ */ React.createElement("span", { className: "w-10 h-10 rounded-full bg-rose-500 text-white flex items-center justify-center text-lg mb-4" }, "\u25A4"), /* @__PURE__ */ React.createElement("h3", { className: "text-2xl font-extrabold text-forest-950" }, bookings.length), /* @__PURE__ */ React.createElement("span", { className: "text-sm font-bold text-slate-700" }, "Total Bookings"), /* @__PURE__ */ React.createElement("p", { className: "text-xs text-rose-500 font-medium mt-2" }, "All website reservations")), /* @__PURE__ */ React.createElement("div", { className: "bg-amber-50 p-5 rounded-lg border border-amber-100" }, /* @__PURE__ */ React.createElement("span", { className: "w-10 h-10 rounded-full bg-amber-500 text-white flex items-center justify-center text-lg mb-4" }, "\u20B9"), /* @__PURE__ */ React.createElement("h3", { className: "text-2xl font-extrabold text-forest-950" }, "\u20B9", totalRevenue.toLocaleString("en-IN")), /* @__PURE__ */ React.createElement("span", { className: "text-sm font-bold text-slate-700" }, "Booking Revenue"), /* @__PURE__ */ React.createElement("p", { className: "text-xs text-amber-600 font-medium mt-2" }, "Direct booking value")), /* @__PURE__ */ React.createElement("div", { className: "bg-emerald-50 p-5 rounded-lg border border-emerald-100" }, /* @__PURE__ */ React.createElement("span", { className: "w-10 h-10 rounded-full bg-emerald-500 text-white flex items-center justify-center text-lg mb-4" }, "\u2713"), /* @__PURE__ */ React.createElement("h3", { className: "text-2xl font-extrabold text-forest-950" }, confirmedBookings), /* @__PURE__ */ React.createElement("span", { className: "text-sm font-bold text-slate-700" }, "Confirmed Stays"), /* @__PURE__ */ React.createElement("p", { className: "text-xs text-emerald-600 font-medium mt-2" }, checkedInBookings, " currently checked in")), /* @__PURE__ */ React.createElement("div", { className: "bg-violet-50 p-5 rounded-lg border border-violet-100" }, /* @__PURE__ */ React.createElement("span", { className: "w-10 h-10 rounded-full bg-violet-500 text-white flex items-center justify-center text-lg mb-4" }, "\u25C9"), /* @__PURE__ */ React.createElement("h3", { className: "text-2xl font-extrabold text-forest-950" }, occupancyRate, "%"), /* @__PURE__ */ React.createElement("span", { className: "text-sm font-bold text-slate-700" }, "Occupancy Signal"), /* @__PURE__ */ React.createElement("p", { className: "text-xs text-violet-600 font-medium mt-2" }, newQueries, " unanswered guest queries"))), /* @__PURE__ */ React.createElement("div", { className: "grid grid-cols-1 xl:grid-cols-3 gap-6" }, /* @__PURE__ */ React.createElement("section", { className: "xl:col-span-2 bg-white rounded-xl border border-slate-200 p-6 shadow-sm" }, /* @__PURE__ */ React.createElement("div", { className: "flex items-center justify-between mb-7" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h3", { className: "text-lg font-extrabold text-forest-950" }, "Booking Overview"), /* @__PURE__ */ React.createElement("p", { className: "text-xs text-slate-400" }, "Reservations by room type")), /* @__PURE__ */ React.createElement("span", { className: "text-xs bg-emerald-50 text-emerald-700 font-bold px-3 py-1 rounded-full" }, "Live data")), /* @__PURE__ */ React.createElement("div", { className: "h-56 flex items-end justify-around gap-4 border-b border-slate-200 px-2" }, roomPerformance.map((room, index) => /* @__PURE__ */ React.createElement("div", { key: room.name, className: "h-full flex-1 flex flex-col justify-end items-center gap-2 min-w-0" }, /* @__PURE__ */ React.createElement("span", { className: "text-xs font-bold text-slate-600" }, room.bookings), /* @__PURE__ */ React.createElement("div", { className: `w-full max-w-16 rounded-t-md ${["bg-emerald-500", "bg-amber-400", "bg-sky-500", "bg-violet-500"][index % 4]}`, style: { height: `${Math.max(10, room.bookings / maxRoomBookings * 78)}%` } }), /* @__PURE__ */ React.createElement("span", { className: "text-[10px] text-slate-500 text-center h-8 leading-tight" }, room.name))))), /* @__PURE__ */ React.createElement("section", { className: "bg-white rounded-xl border border-slate-200 p-6 shadow-sm" }, /* @__PURE__ */ React.createElement("h3", { className: "text-lg font-extrabold text-forest-950" }, "Operations"), /* @__PURE__ */ React.createElement("p", { className: "text-xs text-slate-400 mb-6" }, "Items needing attention"), /* @__PURE__ */ React.createElement("div", { className: "space-y-4" }, /* @__PURE__ */ React.createElement("button", { onClick: () => setAdminTab("bookings"), className: "w-full flex items-center justify-between p-4 bg-rose-50 text-left rounded-lg" }, /* @__PURE__ */ React.createElement("span", null, /* @__PURE__ */ React.createElement("strong", { className: "block text-sm text-slate-800" }, "Manage bookings"), /* @__PURE__ */ React.createElement("small", { className: "text-slate-500" }, "Update guest status")), /* @__PURE__ */ React.createElement("b", { className: "text-rose-600" }, bookings.length)), /* @__PURE__ */ React.createElement("button", { onClick: () => setAdminTab("queries"), className: "w-full flex items-center justify-between p-4 bg-amber-50 text-left rounded-lg" }, /* @__PURE__ */ React.createElement("span", null, /* @__PURE__ */ React.createElement("strong", { className: "block text-sm text-slate-800" }, "Guest queries"), /* @__PURE__ */ React.createElement("small", { className: "text-slate-500" }, "Awaiting response")), /* @__PURE__ */ React.createElement("b", { className: "text-amber-600" }, newQueries)), /* @__PURE__ */ React.createElement("button", { onClick: () => setAdminTab("rooms"), className: "w-full flex items-center justify-between p-4 bg-emerald-50 text-left rounded-lg" }, /* @__PURE__ */ React.createElement("span", null, /* @__PURE__ */ React.createElement("strong", { className: "block text-sm text-slate-800" }, "Room inventory"), /* @__PURE__ */ React.createElement("small", { className: "text-slate-500" }, "Rates and availability")), /* @__PURE__ */ React.createElement("b", { className: "text-emerald-600" }, rooms.length))))), /* @__PURE__ */ React.createElement("div", { className: "bg-white rounded-xl p-6 border border-slate-200 shadow-sm" }, /* @__PURE__ */ React.createElement("div", { className: "flex justify-between items-center mb-6" }, /* @__PURE__ */ React.createElement("h3", { className: "font-serif text-xl font-bold text-forest-950" }, "Recent Direct Reservations"), /* @__PURE__ */ React.createElement("button", { onClick: () => setAdminTab("bookings"), className: "text-xs font-bold text-amber-600 hover:underline" }, "View All \u2192")), /* @__PURE__ */ React.createElement("div", { className: "overflow-x-auto" }, /* @__PURE__ */ React.createElement("table", { className: "w-full text-left text-xs sm:text-sm" }, /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", { className: "border-b border-stone-200 text-stone-400 uppercase text-[11px] font-bold" }, /* @__PURE__ */ React.createElement("th", { className: "pb-3" }, "Booking ID"), /* @__PURE__ */ React.createElement("th", { className: "pb-3" }, "Guest Name"), /* @__PURE__ */ React.createElement("th", { className: "pb-3" }, "Room"), /* @__PURE__ */ React.createElement("th", { className: "pb-3" }, "Dates"), /* @__PURE__ */ React.createElement("th", { className: "pb-3" }, "Amount"), /* @__PURE__ */ React.createElement("th", { className: "pb-3" }, "Status"))), /* @__PURE__ */ React.createElement("tbody", { className: "divide-y divide-stone-100 font-medium" }, bookings.slice(0, 5).map((b) => /* @__PURE__ */ React.createElement("tr", { key: b.id, className: "hover:bg-stone-50" }, /* @__PURE__ */ React.createElement("td", { className: "py-3 font-mono font-bold text-forest-900" }, b.id), /* @__PURE__ */ React.createElement("td", { className: "py-3 text-stone-800" }, b.guestName), /* @__PURE__ */ React.createElement("td", { className: "py-3 text-stone-600" }, b.roomName), /* @__PURE__ */ React.createElement("td", { className: "py-3 text-stone-600" }, b.checkIn, " to ", b.checkOut), /* @__PURE__ */ React.createElement("td", { className: "py-3 font-bold text-forest-950" }, "\u20B9", b.totalAmount), /* @__PURE__ */ React.createElement("td", { className: "py-3" }, /* @__PURE__ */ React.createElement("span", { className: `px-2.5 py-1 rounded-full text-xs font-bold ${b.status === "Confirmed" ? "bg-emerald-100 text-emerald-800" : b.status === "Checked-In" ? "bg-blue-100 text-blue-800" : "bg-stone-200 text-stone-700"}` }, b.status))))))))), adminTab === "bookings" && /* @__PURE__ */ React.createElement("div", { className: "bg-white rounded-xl p-5 sm:p-7 border border-slate-200 shadow-sm" }, /* @__PURE__ */ React.createElement("div", { className: "flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h3", { className: "text-xl font-extrabold text-forest-950" }, "Guest Reservations"), /* @__PURE__ */ React.createElement("p", { className: "text-xs text-slate-500" }, "Every website booking appears here automatically")), /* @__PURE__ */ React.createElement("button", { onClick: exportBookings, className: "px-4 py-2 border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:text-emerald-700 hover:border-emerald-500" }, "\u21E9 Export CSV")), /* @__PURE__ */ React.createElement("div", { className: "grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 mb-6 p-4 bg-slate-50 border border-slate-100 rounded-lg" }, /* @__PURE__ */ React.createElement("div", { className: "relative" }, /* @__PURE__ */ React.createElement("span", { className: "absolute left-3 top-2.5 text-slate-400" }, "\u2315"), /* @__PURE__ */ React.createElement("input", { value: bookingSearch, onChange: (event) => setBookingSearch(event.target.value), placeholder: "Search guest, booking ID, phone or room", className: "w-full bg-white border border-slate-200 rounded-lg py-2 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600" })), /* @__PURE__ */ React.createElement("div", { className: "flex flex-wrap gap-2" }, ["All", "Confirmed", "Checked-In", "Completed", "Cancelled"].map((status) => /* @__PURE__ */ React.createElement("button", { key: status, onClick: () => setBookingFilter(status), className: `px-3 py-2 rounded-lg text-xs font-bold ${bookingFilter === status ? "bg-forest-900 text-white" : "bg-white border border-slate-200 text-slate-600"}` }, status)))), /* @__PURE__ */ React.createElement("p", { className: "text-xs font-semibold text-slate-500 mb-4" }, "Showing ", filteredBookings.length, " of ", bookings.length, " bookings"), /* @__PURE__ */ React.createElement("div", { className: "space-y-4" }, filteredBookings.length === 0 && /* @__PURE__ */ React.createElement("div", { className: "py-14 text-center text-sm text-slate-400" }, "No bookings match this search or status."), filteredBookings.map((book) => {
-    var _a2;
-    return /* @__PURE__ */ React.createElement("div", { key: book.id, className: "p-5 rounded-lg bg-white border border-slate-200 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 hover:border-emerald-500 hover:shadow-sm transition" }, /* @__PURE__ */ React.createElement("div", { className: "space-y-1" }, /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-3" }, /* @__PURE__ */ React.createElement("span", { className: "font-mono font-bold text-sm bg-forest-900 text-amber-300 px-2.5 py-0.5 rounded" }, book.id), /* @__PURE__ */ React.createElement("h4", { className: "font-bold text-base text-forest-950" }, book.guestName), /* @__PURE__ */ React.createElement("span", { className: "text-xs text-stone-500" }, "(", book.guests, " Guests)")), /* @__PURE__ */ React.createElement("p", { className: "text-xs text-stone-600" }, "\u{1F4DE} ", book.phone, " | \u2709\uFE0F ", book.email), /* @__PURE__ */ React.createElement("p", { className: "text-xs font-semibold text-forest-800" }, "\u{1F3E0} ", book.roomName, " \u2022 \u{1F4C5} ", book.checkIn, " to ", book.checkOut), book.notes && /* @__PURE__ */ React.createElement("p", { className: "text-xs text-amber-700 italic" }, 'Special Note: "', book.notes, '"')), /* @__PURE__ */ React.createElement("div", { className: "flex flex-wrap items-center gap-3" }, /* @__PURE__ */ React.createElement("div", { className: "text-right pr-2" }, /* @__PURE__ */ React.createElement("div", { className: "text-lg font-black text-forest-950" }, "\u20B9", book.totalAmount), /* @__PURE__ */ React.createElement("span", { className: "text-[11px] text-stone-400" }, book.paymentMode || "Direct")), /* @__PURE__ */ React.createElement(
-      "select",
-      {
-        value: book.status,
-        onChange: (e) => updateBookingStatus(book.id, e.target.value),
-        className: "text-xs font-bold bg-white border border-stone-300 rounded-xl px-3 py-2 text-stone-800 focus:ring-2 focus:ring-forest-800 cursor-pointer"
-      },
-      /* @__PURE__ */ React.createElement("option", { value: "Confirmed" }, "Confirmed"),
-      /* @__PURE__ */ React.createElement("option", { value: "Checked-In" }, "Checked-In"),
-      /* @__PURE__ */ React.createElement("option", { value: "Completed" }, "Completed"),
-      /* @__PURE__ */ React.createElement("option", { value: "Cancelled" }, "Cancelled")
-    ), /* @__PURE__ */ React.createElement(
-      "a",
-      {
-        href: `https://wa.me/${(_a2 = book.phone) == null ? void 0 : _a2.replace(/[^0-9]/g, "")}?text=Hello%20${encodeURIComponent(book.guestName)},%20confirming%20your%20stay%20at%20Checkinn%20Homes%20Tapovan%20Rishikesh%20(ID:%20${book.id})`,
-        target: "_blank",
-        rel: "noreferrer",
-        className: "px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition flex items-center gap-1"
-      },
-      /* @__PURE__ */ React.createElement("span", null, "\u{1F4AC}"),
-      " WhatsApp Guest"
-    ), /* @__PURE__ */ React.createElement("button", { onClick: () => deleteBooking(book.id), className: "w-9 h-9 border border-red-200 text-red-500 hover:bg-red-50 rounded-lg", title: "Delete booking", "aria-label": `Delete booking ${book.id}` }, "\xD7")));
-  }))), adminTab === "rooms" && /* @__PURE__ */ React.createElement("div", { className: "bg-white rounded-xl p-5 sm:p-8 border border-slate-200 shadow-sm" }, /* @__PURE__ */ React.createElement("div", { className: "flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-7" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h3", { className: "text-xl font-extrabold text-forest-950" }, "Room Configuration & Pricing"), /* @__PURE__ */ React.createElement("p", { className: "text-xs text-slate-500 mt-1" }, "Add, edit or remove rooms shown on the public website")), /* @__PURE__ */ React.createElement("button", { onClick: openAddRoom, className: "self-start bg-forest-900 hover:bg-forest-800 text-white font-bold px-5 py-3 rounded-lg text-sm shadow-sm" }, "+ Add Room")), /* @__PURE__ */ React.createElement("div", { className: "grid grid-cols-1 md:grid-cols-2 gap-6" }, rooms.map((room) => /* @__PURE__ */ React.createElement("div", { key: room.id, className: "border border-slate-200 rounded-lg p-5 bg-white flex flex-col justify-between hover:border-emerald-500 hover:shadow-sm transition" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "flex gap-4 items-start mb-3" }, /* @__PURE__ */ React.createElement("img", { src: room.image, alt: room.name, className: "w-20 h-20 rounded-xl object-cover" }), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h4", { className: "font-serif font-bold text-lg text-forest-950" }, room.name), /* @__PURE__ */ React.createElement("p", { className: "text-xs text-amber-700 font-semibold" }, room.type), /* @__PURE__ */ React.createElement("p", { className: "text-xs text-stone-500 mt-1" }, "Current Price: ", /* @__PURE__ */ React.createElement("span", { className: "font-bold text-forest-950 text-sm" }, "\u20B9", room.price, "/night")))), /* @__PURE__ */ React.createElement("p", { className: "text-xs text-stone-600 line-clamp-2 mb-3" }, room.description), /* @__PURE__ */ React.createElement("div", { className: "text-[11px] text-stone-500 font-medium" }, "Capacity: ", room.capacity, " | Bed: ", room.bed), /* @__PURE__ */ React.createElement("p", { className: "text-[11px] text-sky-700 font-semibold mt-1" }, "\u25A7 ", (room.gallery || [room.image]).length, " room photo", (room.gallery || [room.image]).length === 1 ? "" : "s"), /* @__PURE__ */ React.createElement("div", { className: "mt-4" }, /* @__PURE__ */ React.createElement("span", { className: "text-[10px] font-bold uppercase tracking-wide text-slate-400" }, "Amenities"), /* @__PURE__ */ React.createElement("div", { className: "flex flex-wrap gap-1.5 mt-1.5" }, room.amenities.map((amenity) => /* @__PURE__ */ React.createElement("span", { key: amenity, className: "text-[10px] bg-slate-100 text-slate-600 px-2 py-1 rounded" }, amenity)))), /* @__PURE__ */ React.createElement("div", { className: "mt-4" }, /* @__PURE__ */ React.createElement("span", { className: "text-[10px] font-bold uppercase tracking-wide text-slate-400" }, "Pricing Plans"), /* @__PURE__ */ React.createElement("div", { className: "space-y-1 mt-1.5" }, (room.mealPlans || [`Room Only (EP): \u20B9${room.price.toLocaleString("en-IN")}`]).map((plan) => /* @__PURE__ */ React.createElement("p", { key: plan, className: "text-[11px] font-semibold text-amber-700" }, plan))))), /* @__PURE__ */ React.createElement("div", { className: "pt-4 mt-3 border-t border-slate-100 flex justify-end gap-2" }, /* @__PURE__ */ React.createElement(
+  ))), /* @__PURE__ */ React.createElement("div", { className: "mt-auto border-t border-slate-100 pt-5" }, /* @__PURE__ */ React.createElement("button", { onClick: () => navigateToPage("home"), className: "w-full px-4 py-3 text-left text-sm font-semibold text-slate-500 hover:text-forest-900" }, "\u2190 View Website"), /* @__PURE__ */ React.createElement("button", { onClick: handleAdminLogout, className: "w-full px-4 py-3 text-left text-sm font-semibold text-red-500 hover:bg-red-50 rounded-lg" }, "\u21E5 Logout"), /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-3 px-4 pt-4" }, /* @__PURE__ */ React.createElement("span", { className: "w-9 h-9 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center font-bold" }, "A"), /* @__PURE__ */ React.createElement("span", null, /* @__PURE__ */ React.createElement("strong", { className: "block text-sm" }, "Property Admin"), /* @__PURE__ */ React.createElement("small", { className: "text-slate-400" }, "Administrator"))))), /* @__PURE__ */ React.createElement("div", { className: "min-w-0 flex-1" }, /* @__PURE__ */ React.createElement("header", { className: "sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-slate-200 px-4 sm:px-6 lg:px-8 py-4" }, /* @__PURE__ */ React.createElement("div", { className: "flex items-center justify-between gap-4" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("p", { className: "text-xs font-bold uppercase tracking-widest text-emerald-700" }, "Check In Homes"), /* @__PURE__ */ React.createElement("h1", { className: "text-xl sm:text-2xl font-extrabold text-forest-950" }, adminNavItems.find((item) => item.id === adminTab)?.label)), /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-3 sm:gap-5" }, /* @__PURE__ */ React.createElement("div", { className: "relative hidden sm:block" }, /* @__PURE__ */ React.createElement("span", { className: "absolute left-3 top-2.5 text-slate-400" }, "\u2315"), /* @__PURE__ */ React.createElement("input", { value: bookingSearch, onChange: (event) => setBookingSearch(event.target.value), onFocus: () => setAdminTab("bookings"), placeholder: "Search bookings...", className: "w-64 bg-slate-50 border border-slate-200 rounded-lg py-2 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600" })), /* @__PURE__ */ React.createElement("span", { className: "hidden sm:inline text-xs text-slate-500" }, (/* @__PURE__ */ new Date()).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })), /* @__PURE__ */ React.createElement("span", { className: "w-10 h-10 rounded-full bg-forest-900 text-amber-300 flex items-center justify-center font-bold" }, "A"))), /* @__PURE__ */ React.createElement("nav", { className: "lg:hidden flex gap-2 overflow-x-auto hide-scrollbar mt-4 pb-1", "aria-label": "Mobile admin navigation" }, adminNavItems.map((item) => /* @__PURE__ */ React.createElement("button", { key: item.id, onClick: () => setAdminTab(item.id), className: `shrink-0 px-3 py-2 rounded-lg text-xs font-bold ${adminTab === item.id ? "bg-forest-900 text-white" : "bg-slate-100 text-slate-600"}` }, item.icon, " ", item.label, item.count !== void 0 ? ` (${item.count})` : "")))), /* @__PURE__ */ React.createElement("main", { className: "max-w-[1600px] mx-auto p-4 sm:p-6 lg:p-8" }, adminTab === "dashboard" && /* @__PURE__ */ React.createElement("div", { className: "space-y-6" }, /* @__PURE__ */ React.createElement("div", { className: "flex flex-col sm:flex-row sm:items-end justify-between gap-4" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h2", { className: "text-2xl font-extrabold text-forest-950" }, "Welcome back, Admin"), /* @__PURE__ */ React.createElement("p", { className: "text-sm text-slate-500 mt-1" }, "Here is what is happening at Check In Homes today.")), /* @__PURE__ */ React.createElement("button", { onClick: exportBookings, className: "self-start bg-white border border-slate-200 px-4 py-2 rounded-lg text-sm font-bold text-slate-600 hover:border-emerald-600 hover:text-emerald-700" }, "\u21E9 Export Report")), /* @__PURE__ */ React.createElement("div", { className: "grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4" }, /* @__PURE__ */ React.createElement("div", { className: "bg-rose-50 p-5 rounded-lg border border-rose-100" }, /* @__PURE__ */ React.createElement("span", { className: "w-10 h-10 rounded-full bg-rose-500 text-white flex items-center justify-center text-lg mb-4" }, "\u25A4"), /* @__PURE__ */ React.createElement("h3", { className: "text-2xl font-extrabold text-forest-950" }, bookings.length), /* @__PURE__ */ React.createElement("span", { className: "text-sm font-bold text-slate-700" }, "Total Bookings"), /* @__PURE__ */ React.createElement("p", { className: "text-xs text-rose-500 font-medium mt-2" }, "All website reservations")), /* @__PURE__ */ React.createElement("div", { className: "bg-amber-50 p-5 rounded-lg border border-amber-100" }, /* @__PURE__ */ React.createElement("span", { className: "w-10 h-10 rounded-full bg-amber-500 text-white flex items-center justify-center text-lg mb-4" }, "\u20B9"), /* @__PURE__ */ React.createElement("h3", { className: "text-2xl font-extrabold text-forest-950" }, "\u20B9", totalRevenue.toLocaleString("en-IN")), /* @__PURE__ */ React.createElement("span", { className: "text-sm font-bold text-slate-700" }, "Booking Revenue"), /* @__PURE__ */ React.createElement("p", { className: "text-xs text-amber-600 font-medium mt-2" }, "Direct booking value")), /* @__PURE__ */ React.createElement("div", { className: "bg-emerald-50 p-5 rounded-lg border border-emerald-100" }, /* @__PURE__ */ React.createElement("span", { className: "w-10 h-10 rounded-full bg-emerald-500 text-white flex items-center justify-center text-lg mb-4" }, "\u2713"), /* @__PURE__ */ React.createElement("h3", { className: "text-2xl font-extrabold text-forest-950" }, confirmedBookings), /* @__PURE__ */ React.createElement("span", { className: "text-sm font-bold text-slate-700" }, "Confirmed Stays"), /* @__PURE__ */ React.createElement("p", { className: "text-xs text-emerald-600 font-medium mt-2" }, checkedInBookings, " currently checked in")), /* @__PURE__ */ React.createElement("div", { className: "bg-violet-50 p-5 rounded-lg border border-violet-100" }, /* @__PURE__ */ React.createElement("span", { className: "w-10 h-10 rounded-full bg-violet-500 text-white flex items-center justify-center text-lg mb-4" }, "\u25C9"), /* @__PURE__ */ React.createElement("h3", { className: "text-2xl font-extrabold text-forest-950" }, occupancyRate, "%"), /* @__PURE__ */ React.createElement("span", { className: "text-sm font-bold text-slate-700" }, "Occupancy Signal"), /* @__PURE__ */ React.createElement("p", { className: "text-xs text-violet-600 font-medium mt-2" }, newQueries, " unanswered guest queries"))), /* @__PURE__ */ React.createElement("div", { className: "grid grid-cols-1 xl:grid-cols-3 gap-6" }, /* @__PURE__ */ React.createElement("section", { className: "xl:col-span-2 bg-white rounded-xl border border-slate-200 p-6 shadow-sm" }, /* @__PURE__ */ React.createElement("div", { className: "flex items-center justify-between mb-7" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h3", { className: "text-lg font-extrabold text-forest-950" }, "Booking Overview"), /* @__PURE__ */ React.createElement("p", { className: "text-xs text-slate-400" }, "Reservations by room type")), /* @__PURE__ */ React.createElement("span", { className: "text-xs bg-emerald-50 text-emerald-700 font-bold px-3 py-1 rounded-full" }, "Live data")), /* @__PURE__ */ React.createElement("div", { className: "h-56 flex items-end justify-around gap-4 border-b border-slate-200 px-2" }, roomPerformance.map((room, index) => /* @__PURE__ */ React.createElement("div", { key: room.name, className: "h-full flex-1 flex flex-col justify-end items-center gap-2 min-w-0" }, /* @__PURE__ */ React.createElement("span", { className: "text-xs font-bold text-slate-600" }, room.bookings), /* @__PURE__ */ React.createElement("div", { className: `w-full max-w-16 rounded-t-md ${["bg-emerald-500", "bg-amber-400", "bg-sky-500", "bg-violet-500"][index % 4]}`, style: { height: `${Math.max(10, room.bookings / maxRoomBookings * 78)}%` } }), /* @__PURE__ */ React.createElement("span", { className: "text-[10px] text-slate-500 text-center h-8 leading-tight" }, room.name))))), /* @__PURE__ */ React.createElement("section", { className: "bg-white rounded-xl border border-slate-200 p-6 shadow-sm" }, /* @__PURE__ */ React.createElement("h3", { className: "text-lg font-extrabold text-forest-950" }, "Operations"), /* @__PURE__ */ React.createElement("p", { className: "text-xs text-slate-400 mb-6" }, "Items needing attention"), /* @__PURE__ */ React.createElement("div", { className: "space-y-4" }, /* @__PURE__ */ React.createElement("button", { onClick: () => setAdminTab("bookings"), className: "w-full flex items-center justify-between p-4 bg-rose-50 text-left rounded-lg" }, /* @__PURE__ */ React.createElement("span", null, /* @__PURE__ */ React.createElement("strong", { className: "block text-sm text-slate-800" }, "Manage bookings"), /* @__PURE__ */ React.createElement("small", { className: "text-slate-500" }, "Update guest status")), /* @__PURE__ */ React.createElement("b", { className: "text-rose-600" }, bookings.length)), /* @__PURE__ */ React.createElement("button", { onClick: () => setAdminTab("queries"), className: "w-full flex items-center justify-between p-4 bg-amber-50 text-left rounded-lg" }, /* @__PURE__ */ React.createElement("span", null, /* @__PURE__ */ React.createElement("strong", { className: "block text-sm text-slate-800" }, "Guest queries"), /* @__PURE__ */ React.createElement("small", { className: "text-slate-500" }, "Awaiting response")), /* @__PURE__ */ React.createElement("b", { className: "text-amber-600" }, newQueries)), /* @__PURE__ */ React.createElement("button", { onClick: () => setAdminTab("rooms"), className: "w-full flex items-center justify-between p-4 bg-emerald-50 text-left rounded-lg" }, /* @__PURE__ */ React.createElement("span", null, /* @__PURE__ */ React.createElement("strong", { className: "block text-sm text-slate-800" }, "Room inventory"), /* @__PURE__ */ React.createElement("small", { className: "text-slate-500" }, "Rates and availability")), /* @__PURE__ */ React.createElement("b", { className: "text-emerald-600" }, rooms.length))))), /* @__PURE__ */ React.createElement("div", { className: "bg-white rounded-xl p-6 border border-slate-200 shadow-sm" }, /* @__PURE__ */ React.createElement("div", { className: "flex justify-between items-center mb-6" }, /* @__PURE__ */ React.createElement("h3", { className: "font-serif text-xl font-bold text-forest-950" }, "Recent Direct Reservations"), /* @__PURE__ */ React.createElement("button", { onClick: () => setAdminTab("bookings"), className: "text-xs font-bold text-amber-600 hover:underline" }, "View All \u2192")), /* @__PURE__ */ React.createElement("div", { className: "overflow-x-auto" }, /* @__PURE__ */ React.createElement("table", { className: "w-full text-left text-xs sm:text-sm" }, /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", { className: "border-b border-stone-200 text-stone-400 uppercase text-[11px] font-bold" }, /* @__PURE__ */ React.createElement("th", { className: "pb-3" }, "Booking ID"), /* @__PURE__ */ React.createElement("th", { className: "pb-3" }, "Guest Name"), /* @__PURE__ */ React.createElement("th", { className: "pb-3" }, "Room"), /* @__PURE__ */ React.createElement("th", { className: "pb-3" }, "Dates"), /* @__PURE__ */ React.createElement("th", { className: "pb-3" }, "Amount"), /* @__PURE__ */ React.createElement("th", { className: "pb-3" }, "Status"))), /* @__PURE__ */ React.createElement("tbody", { className: "divide-y divide-stone-100 font-medium" }, bookings.slice(0, 5).map((b) => /* @__PURE__ */ React.createElement("tr", { key: b.id, className: "hover:bg-stone-50" }, /* @__PURE__ */ React.createElement("td", { className: "py-3 font-mono font-bold text-forest-900" }, b.id), /* @__PURE__ */ React.createElement("td", { className: "py-3 text-stone-800" }, b.guestName), /* @__PURE__ */ React.createElement("td", { className: "py-3 text-stone-600" }, b.roomName), /* @__PURE__ */ React.createElement("td", { className: "py-3 text-stone-600" }, b.checkIn, " to ", b.checkOut), /* @__PURE__ */ React.createElement("td", { className: "py-3 font-bold text-forest-950" }, "\u20B9", b.totalAmount), /* @__PURE__ */ React.createElement("td", { className: "py-3" }, /* @__PURE__ */ React.createElement("span", { className: `px-2.5 py-1 rounded-full text-xs font-bold ${b.status === "Confirmed" ? "bg-emerald-100 text-emerald-800" : b.status === "Checked-In" ? "bg-blue-100 text-blue-800" : "bg-stone-200 text-stone-700"}` }, b.status))))))))), adminTab === "bookings" && /* @__PURE__ */ React.createElement("div", { className: "bg-white rounded-xl p-5 sm:p-7 border border-slate-200 shadow-sm" }, /* @__PURE__ */ React.createElement("div", { className: "flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h3", { className: "text-xl font-extrabold text-forest-950" }, "Guest Reservations"), /* @__PURE__ */ React.createElement("p", { className: "text-xs text-slate-500" }, "Every website booking appears here automatically")), /* @__PURE__ */ React.createElement("button", { onClick: exportBookings, className: "px-4 py-2 border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:text-emerald-700 hover:border-emerald-500" }, "\u21E9 Export CSV")), /* @__PURE__ */ React.createElement("div", { className: "grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 mb-6 p-4 bg-slate-50 border border-slate-100 rounded-lg" }, /* @__PURE__ */ React.createElement("div", { className: "relative" }, /* @__PURE__ */ React.createElement("span", { className: "absolute left-3 top-2.5 text-slate-400" }, "\u2315"), /* @__PURE__ */ React.createElement("input", { value: bookingSearch, onChange: (event) => setBookingSearch(event.target.value), placeholder: "Search guest, booking ID, phone or room", className: "w-full bg-white border border-slate-200 rounded-lg py-2 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600" })), /* @__PURE__ */ React.createElement("div", { className: "flex flex-wrap gap-2" }, ["All", "Confirmed", "Checked-In", "Completed", "Cancelled"].map((status) => /* @__PURE__ */ React.createElement("button", { key: status, onClick: () => setBookingFilter(status), className: `px-3 py-2 rounded-lg text-xs font-bold ${bookingFilter === status ? "bg-forest-900 text-white" : "bg-white border border-slate-200 text-slate-600"}` }, status)))), /* @__PURE__ */ React.createElement("p", { className: "text-xs font-semibold text-slate-500 mb-4" }, "Showing ", filteredBookings.length, " of ", bookings.length, " bookings"), /* @__PURE__ */ React.createElement("div", { className: "space-y-4" }, filteredBookings.length === 0 && /* @__PURE__ */ React.createElement("div", { className: "py-14 text-center text-sm text-slate-400" }, "No bookings match this search or status."), filteredBookings.map((book) => /* @__PURE__ */ React.createElement("div", { key: book.id, className: "p-5 rounded-lg bg-white border border-slate-200 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 hover:border-emerald-500 hover:shadow-sm transition" }, /* @__PURE__ */ React.createElement("div", { className: "space-y-1" }, /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-3" }, /* @__PURE__ */ React.createElement("span", { className: "font-mono font-bold text-sm bg-forest-900 text-amber-300 px-2.5 py-0.5 rounded" }, book.id), /* @__PURE__ */ React.createElement("h4", { className: "font-bold text-base text-forest-950" }, book.guestName), /* @__PURE__ */ React.createElement("span", { className: "text-xs text-stone-500" }, "(", book.guests, " Guests)")), /* @__PURE__ */ React.createElement("p", { className: "text-xs text-stone-600" }, "\u{1F4DE} ", book.phone, " | \u2709\uFE0F ", book.email), /* @__PURE__ */ React.createElement("p", { className: "text-xs font-semibold text-forest-800" }, "\u{1F3E0} ", book.roomName, " \u2022 \u{1F4C5} ", book.checkIn, " to ", book.checkOut), book.notes && /* @__PURE__ */ React.createElement("p", { className: "text-xs text-amber-700 italic" }, 'Special Note: "', book.notes, '"')), /* @__PURE__ */ React.createElement("div", { className: "flex flex-wrap items-center gap-3" }, /* @__PURE__ */ React.createElement("div", { className: "text-right pr-2" }, /* @__PURE__ */ React.createElement("div", { className: "text-lg font-black text-forest-950" }, "\u20B9", book.totalAmount), /* @__PURE__ */ React.createElement("span", { className: "text-[11px] text-stone-400" }, book.paymentMode || "Direct")), /* @__PURE__ */ React.createElement(
+    "select",
+    {
+      value: book.status,
+      onChange: (e) => updateBookingStatus(book.id, e.target.value),
+      className: "text-xs font-bold bg-white border border-stone-300 rounded-xl px-3 py-2 text-stone-800 focus:ring-2 focus:ring-forest-800 cursor-pointer"
+    },
+    /* @__PURE__ */ React.createElement("option", { value: "Confirmed" }, "Confirmed"),
+    /* @__PURE__ */ React.createElement("option", { value: "Checked-In" }, "Checked-In"),
+    /* @__PURE__ */ React.createElement("option", { value: "Completed" }, "Completed"),
+    /* @__PURE__ */ React.createElement("option", { value: "Cancelled" }, "Cancelled")
+  ), /* @__PURE__ */ React.createElement(
+    "a",
+    {
+      href: `https://wa.me/${book.phone?.replace(/[^0-9]/g, "")}?text=Hello%20${encodeURIComponent(book.guestName)},%20confirming%20your%20stay%20at%20Checkinn%20Homes%20Tapovan%20Rishikesh%20(ID:%20${book.id})`,
+      target: "_blank",
+      rel: "noreferrer",
+      className: "px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition flex items-center gap-1"
+    },
+    /* @__PURE__ */ React.createElement("span", null, "\u{1F4AC}"),
+    " WhatsApp Guest"
+  ), /* @__PURE__ */ React.createElement("button", { onClick: () => deleteBooking(book.id), className: "w-9 h-9 border border-red-200 text-red-500 hover:bg-red-50 rounded-lg", title: "Delete booking", "aria-label": `Delete booking ${book.id}` }, "\xD7")))))), adminTab === "rooms" && /* @__PURE__ */ React.createElement("div", { className: "bg-white rounded-xl p-5 sm:p-8 border border-slate-200 shadow-sm" }, /* @__PURE__ */ React.createElement("div", { className: "flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-7" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h3", { className: "text-xl font-extrabold text-forest-950" }, "Room Configuration & Pricing"), /* @__PURE__ */ React.createElement("p", { className: "text-xs text-slate-500 mt-1" }, "Add, edit or remove rooms shown on the public website")), /* @__PURE__ */ React.createElement("button", { onClick: openAddRoom, className: "self-start bg-forest-900 hover:bg-forest-800 text-white font-bold px-5 py-3 rounded-lg text-sm shadow-sm" }, "+ Add Room")), /* @__PURE__ */ React.createElement("div", { className: "grid grid-cols-1 md:grid-cols-2 gap-6" }, rooms.map((room) => /* @__PURE__ */ React.createElement("div", { key: room.id, className: "border border-slate-200 rounded-lg p-5 bg-white flex flex-col justify-between hover:border-emerald-500 hover:shadow-sm transition" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "flex gap-4 items-start mb-3" }, /* @__PURE__ */ React.createElement("img", { src: room.image, alt: room.name, className: "w-20 h-20 rounded-xl object-cover" }), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h4", { className: "font-serif font-bold text-lg text-forest-950" }, room.name), /* @__PURE__ */ React.createElement("p", { className: "text-xs text-amber-700 font-semibold" }, room.type), /* @__PURE__ */ React.createElement("p", { className: "text-xs text-stone-500 mt-1" }, "Current Price: ", /* @__PURE__ */ React.createElement("span", { className: "font-bold text-forest-950 text-sm" }, "\u20B9", room.price, "/night")))), /* @__PURE__ */ React.createElement("p", { className: "text-xs text-stone-600 line-clamp-2 mb-3" }, room.description), /* @__PURE__ */ React.createElement("div", { className: "text-[11px] text-stone-500 font-medium" }, "Capacity: ", room.capacity, " | Bed: ", room.bed), /* @__PURE__ */ React.createElement("p", { className: "text-[11px] text-sky-700 font-semibold mt-1" }, "\u25A7 ", (room.gallery || [room.image]).length, " room photo", (room.gallery || [room.image]).length === 1 ? "" : "s"), /* @__PURE__ */ React.createElement("div", { className: "mt-4" }, /* @__PURE__ */ React.createElement("span", { className: "text-[10px] font-bold uppercase tracking-wide text-slate-400" }, "Amenities"), /* @__PURE__ */ React.createElement("div", { className: "flex flex-wrap gap-1.5 mt-1.5" }, room.amenities.map((amenity) => /* @__PURE__ */ React.createElement("span", { key: amenity, className: "text-[10px] bg-slate-100 text-slate-600 px-2 py-1 rounded" }, amenity)))), /* @__PURE__ */ React.createElement("div", { className: "mt-4" }, /* @__PURE__ */ React.createElement("span", { className: "text-[10px] font-bold uppercase tracking-wide text-slate-400" }, "Pricing Plans"), /* @__PURE__ */ React.createElement("div", { className: "space-y-1 mt-1.5" }, (room.mealPlans || [`Room Only (EP): \u20B9${room.price.toLocaleString("en-IN")}`]).map((plan) => /* @__PURE__ */ React.createElement("p", { key: plan, className: "text-[11px] font-semibold text-amber-700" }, plan))))), /* @__PURE__ */ React.createElement("div", { className: "pt-4 mt-3 border-t border-slate-100 flex justify-end gap-2" }, /* @__PURE__ */ React.createElement(
     "button",
     {
       onClick: () => deleteRoom(room),
@@ -1492,16 +1450,16 @@ function AdminPanel({
     {
       onClick: () => {
         const getPlanPrice = (prefix) => {
-          var _a2, _b2;
-          const plan = (_a2 = room.mealPlans) == null ? void 0 : _a2.find((item) => item.startsWith(prefix));
-          return plan ? ((_b2 = plan.split("\u20B9")[1]) == null ? void 0 : _b2.replace(/,/g, "")) || "" : "";
+          const plan = room.mealPlans?.find((item) => item.startsWith(prefix));
+          return plan ? plan.split("\u20B9")[1]?.replace(/,/g, "") || "" : "";
         };
-        setEditingRoom(__spreadProps(__spreadValues({}, JSON.parse(JSON.stringify(room))), {
+        setEditingRoom({
+          ...JSON.parse(JSON.stringify(room)),
           amenitiesText: room.amenities.join(", "),
           newGalleryUrl: "",
           breakfastPrice: getPlanPrice("With Breakfast"),
           mealsPrice: getPlanPrice("With Meals")
-        }));
+        });
       },
       className: "px-4 py-2 bg-forest-900 hover:bg-forest-800 text-white text-xs font-bold rounded-lg shadow-sm transition"
     },
@@ -1512,35 +1470,32 @@ function AdminPanel({
   }, className: "border border-slate-200 bg-white text-slate-600 px-4 py-3 rounded-lg text-sm font-bold" }, "Cancel")), /* @__PURE__ */ React.createElement("div", { className: "space-y-3" }, roomTypes.length === 0 && /* @__PURE__ */ React.createElement("div", { className: "py-12 text-center text-sm text-slate-400" }, "No room types available. Add your first room type above."), roomTypes.map((type) => {
     const assignedRooms = rooms.filter((room) => room.type === type).length;
     return /* @__PURE__ */ React.createElement("div", { key: type, className: "flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 border border-slate-200 rounded-lg hover:border-emerald-400" }, /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-3" }, /* @__PURE__ */ React.createElement("span", { className: "w-10 h-10 bg-emerald-50 text-emerald-700 rounded-lg flex items-center justify-center text-xl" }, "\u25C7"), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h4", { className: "font-bold text-slate-800" }, type), /* @__PURE__ */ React.createElement("p", { className: "text-xs text-slate-400" }, assignedRooms, " assigned room", assignedRooms === 1 ? "" : "s"))), /* @__PURE__ */ React.createElement("div", { className: "flex gap-2" }, /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => startEditingRoomType(type), className: "px-4 py-2 border border-slate-200 text-slate-600 hover:border-emerald-500 hover:text-emerald-700 rounded-lg text-xs font-bold" }, "Edit"), /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => deleteRoomType(type), className: "px-4 py-2 border border-red-200 text-red-600 hover:bg-red-50 rounded-lg text-xs font-bold" }, "Delete")));
-  }))), adminTab === "queries" && /* @__PURE__ */ React.createElement("div", { className: "bg-white rounded-3xl p-6 sm:p-8 border border-stone-200 shadow-sm" }, /* @__PURE__ */ React.createElement("div", { className: "flex justify-between items-center mb-6" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h3", { className: "font-serif text-2xl font-bold text-forest-950" }, "Inbound Guest Queries"), /* @__PURE__ */ React.createElement("p", { className: "text-xs text-stone-500" }, "Queries submitted via website contact & inquiry forms"))), /* @__PURE__ */ React.createElement("div", { className: "space-y-4" }, queries.length === 0 ? /* @__PURE__ */ React.createElement("p", { className: "text-stone-500 text-sm text-center py-8" }, "No customer queries currently.") : queries.map((q) => {
-    var _a2;
-    return /* @__PURE__ */ React.createElement("div", { key: q.id, className: "p-5 rounded-2xl bg-stone-50 border border-stone-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4" }, /* @__PURE__ */ React.createElement("div", { className: "space-y-1 max-w-2xl" }, /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-3" }, /* @__PURE__ */ React.createElement("h4", { className: "font-bold text-sm text-forest-950" }, q.name), /* @__PURE__ */ React.createElement("span", { className: "text-xs text-stone-400" }, "(", q.date, ")"), /* @__PURE__ */ React.createElement("span", { className: `text-[10px] font-bold px-2 py-0.5 rounded-full ${q.status === "New" ? "bg-amber-100 text-amber-800" : "bg-emerald-100 text-emerald-800"}` }, q.status)), /* @__PURE__ */ React.createElement("p", { className: "text-xs font-semibold text-amber-700" }, q.subject), /* @__PURE__ */ React.createElement("p", { className: "text-xs text-stone-700 leading-relaxed font-sans" }, q.message), /* @__PURE__ */ React.createElement("div", { className: "text-[11px] text-stone-500 pt-1" }, "Phone: ", q.phone, " | Email: ", q.email)), /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-2" }, /* @__PURE__ */ React.createElement(
-      "button",
-      {
-        onClick: () => toggleQueryStatus(q.id),
-        className: "px-3 py-1.5 bg-stone-200 hover:bg-stone-300 text-stone-800 text-xs font-bold rounded-lg transition"
-      },
-      "Mark ",
-      q.status === "Resolved" ? "New" : "Resolved"
-    ), /* @__PURE__ */ React.createElement(
-      "a",
-      {
-        href: `https://wa.me/${(_a2 = q.phone) == null ? void 0 : _a2.replace(/[^0-9]/g, "")}?text=Hi%20${encodeURIComponent(q.name)},%20replying%20to%20your%20query%20at%20Checkinn%20Homes%20Rishikesh`,
-        target: "_blank",
-        rel: "noreferrer",
-        className: "px-3 py-1.5 bg-emerald-600 text-white text-xs font-bold rounded-lg transition"
-      },
-      "Reply WhatsApp"
-    ), /* @__PURE__ */ React.createElement(
-      "button",
-      {
-        onClick: () => deleteQuery(q.id),
-        className: "p-1.5 text-red-500 hover:bg-red-50 rounded-lg text-xs",
-        title: "Delete query"
-      },
-      "\u{1F5D1}\uFE0F"
-    )));
-  }))), adminTab === "feedback" && /* @__PURE__ */ React.createElement("div", { className: "bg-white rounded-3xl p-6 sm:p-8 border border-stone-200 shadow-sm" }, /* @__PURE__ */ React.createElement("div", { className: "flex justify-between items-center mb-6" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h3", { className: "font-serif text-2xl font-bold text-forest-950" }, "Guest Testimonials Moderation"), /* @__PURE__ */ React.createElement("p", { className: "text-xs text-stone-500" }, "Live reviews appearing on the homepage and review board"))), /* @__PURE__ */ React.createElement("div", { className: "space-y-4" }, reviews.map((rev) => /* @__PURE__ */ React.createElement("div", { key: rev.id, className: "p-4 rounded-2xl bg-stone-50 border border-stone-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-2" }, /* @__PURE__ */ React.createElement("h4", { className: "font-bold text-sm text-forest-950" }, rev.name), /* @__PURE__ */ React.createElement("span", { className: "text-xs text-amber-500" }, "\u2605".repeat(rev.rating)), /* @__PURE__ */ React.createElement("span", { className: "text-xs text-stone-400" }, "(", rev.room, ")")), /* @__PURE__ */ React.createElement("p", { className: "text-xs text-stone-600 italic mt-1 font-serif" }, '"', rev.comment, '"'), /* @__PURE__ */ React.createElement("span", { className: "text-[10px] text-stone-400" }, rev.city, " \u2022 ", rev.date)), /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-2" }, /* @__PURE__ */ React.createElement(
+  }))), adminTab === "queries" && /* @__PURE__ */ React.createElement("div", { className: "bg-white rounded-3xl p-6 sm:p-8 border border-stone-200 shadow-sm" }, /* @__PURE__ */ React.createElement("div", { className: "flex justify-between items-center mb-6" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h3", { className: "font-serif text-2xl font-bold text-forest-950" }, "Inbound Guest Queries"), /* @__PURE__ */ React.createElement("p", { className: "text-xs text-stone-500" }, "Queries submitted via website contact & inquiry forms"))), /* @__PURE__ */ React.createElement("div", { className: "space-y-4" }, queries.length === 0 ? /* @__PURE__ */ React.createElement("p", { className: "text-stone-500 text-sm text-center py-8" }, "No customer queries currently.") : queries.map((q) => /* @__PURE__ */ React.createElement("div", { key: q.id, className: "p-5 rounded-2xl bg-stone-50 border border-stone-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4" }, /* @__PURE__ */ React.createElement("div", { className: "space-y-1 max-w-2xl" }, /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-3" }, /* @__PURE__ */ React.createElement("h4", { className: "font-bold text-sm text-forest-950" }, q.name), /* @__PURE__ */ React.createElement("span", { className: "text-xs text-stone-400" }, "(", q.date, ")"), /* @__PURE__ */ React.createElement("span", { className: `text-[10px] font-bold px-2 py-0.5 rounded-full ${q.status === "New" ? "bg-amber-100 text-amber-800" : "bg-emerald-100 text-emerald-800"}` }, q.status)), /* @__PURE__ */ React.createElement("p", { className: "text-xs font-semibold text-amber-700" }, q.subject), /* @__PURE__ */ React.createElement("p", { className: "text-xs text-stone-700 leading-relaxed font-sans" }, q.message), /* @__PURE__ */ React.createElement("div", { className: "text-[11px] text-stone-500 pt-1" }, "Phone: ", q.phone, " | Email: ", q.email)), /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-2" }, /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      onClick: () => toggleQueryStatus(q.id),
+      className: "px-3 py-1.5 bg-stone-200 hover:bg-stone-300 text-stone-800 text-xs font-bold rounded-lg transition"
+    },
+    "Mark ",
+    q.status === "Resolved" ? "New" : "Resolved"
+  ), /* @__PURE__ */ React.createElement(
+    "a",
+    {
+      href: `https://wa.me/${q.phone?.replace(/[^0-9]/g, "")}?text=Hi%20${encodeURIComponent(q.name)},%20replying%20to%20your%20query%20at%20Checkinn%20Homes%20Rishikesh`,
+      target: "_blank",
+      rel: "noreferrer",
+      className: "px-3 py-1.5 bg-emerald-600 text-white text-xs font-bold rounded-lg transition"
+    },
+    "Reply WhatsApp"
+  ), /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      onClick: () => deleteQuery(q.id),
+      className: "p-1.5 text-red-500 hover:bg-red-50 rounded-lg text-xs",
+      title: "Delete query"
+    },
+    "\u{1F5D1}\uFE0F"
+  )))))), adminTab === "feedback" && /* @__PURE__ */ React.createElement("div", { className: "bg-white rounded-3xl p-6 sm:p-8 border border-stone-200 shadow-sm" }, /* @__PURE__ */ React.createElement("div", { className: "flex justify-between items-center mb-6" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h3", { className: "font-serif text-2xl font-bold text-forest-950" }, "Guest Testimonials Moderation"), /* @__PURE__ */ React.createElement("p", { className: "text-xs text-stone-500" }, "Live reviews appearing on the homepage and review board"))), /* @__PURE__ */ React.createElement("div", { className: "space-y-4" }, reviews.map((rev) => /* @__PURE__ */ React.createElement("div", { key: rev.id, className: "p-4 rounded-2xl bg-stone-50 border border-stone-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-2" }, /* @__PURE__ */ React.createElement("h4", { className: "font-bold text-sm text-forest-950" }, rev.name), /* @__PURE__ */ React.createElement("span", { className: "text-xs text-amber-500" }, "\u2605".repeat(rev.rating)), /* @__PURE__ */ React.createElement("span", { className: "text-xs text-stone-400" }, "(", rev.room, ")")), /* @__PURE__ */ React.createElement("p", { className: "text-xs text-stone-600 italic mt-1 font-serif" }, '"', rev.comment, '"'), /* @__PURE__ */ React.createElement("span", { className: "text-[10px] text-stone-400" }, rev.city, " \u2022 ", rev.date)), /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-2" }, /* @__PURE__ */ React.createElement(
     "button",
     {
       onClick: () => deleteReview(rev.id),
@@ -1556,21 +1511,21 @@ function AdminPanel({
     { key: "wifiSpeed", label: "Wi-Fi Speed", type: "text" },
     { key: "checkInTime", label: "Check-In Time", type: "text" },
     { key: "checkOutTime", label: "Check-Out Time", type: "text" }
-  ].map((field) => /* @__PURE__ */ React.createElement("label", { key: field.key, className: "block" }, /* @__PURE__ */ React.createElement("span", { className: "block text-xs font-bold uppercase tracking-wide text-slate-500 mb-2" }, field.label), /* @__PURE__ */ React.createElement("input", { type: field.type, value: hotelConfig[field.key] || "", onChange: (event) => setHotelConfig(__spreadProps(__spreadValues({}, hotelConfig), { [field.key]: event.target.value })), className: "w-full px-4 py-3 rounded-lg border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600" }))), /* @__PURE__ */ React.createElement("label", { className: "block md:col-span-2" }, /* @__PURE__ */ React.createElement("span", { className: "block text-xs font-bold uppercase tracking-wide text-slate-500 mb-2" }, "Property Address"), /* @__PURE__ */ React.createElement("textarea", { rows: "3", value: hotelConfig.location || "", onChange: (event) => setHotelConfig(__spreadProps(__spreadValues({}, hotelConfig), { location: event.target.value })), className: "w-full px-4 py-3 rounded-lg border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600" }))), /* @__PURE__ */ React.createElement("div", { className: "mt-7 pt-6 border-t border-slate-100 flex items-center gap-4" }, /* @__PURE__ */ React.createElement("button", { onClick: saveHotelSettings, className: "bg-forest-900 text-white px-6 py-3 rounded-lg text-sm font-bold hover:bg-forest-800" }, "Save Changes"), /* @__PURE__ */ React.createElement("span", { className: "text-xs text-slate-400" }, "Changes are automatically stored in this browser."))), adminTab === "mysql" && /* @__PURE__ */ React.createElement("div", { className: "bg-white rounded-xl p-6 sm:p-8 border border-slate-200 shadow-sm" }, /* @__PURE__ */ React.createElement("div", { className: "max-w-4xl" }, /* @__PURE__ */ React.createElement("span", { className: "text-emerald-600 font-bold text-xs uppercase tracking-wider font-mono" }, "Hostinger PHP + MySQL Integration"), /* @__PURE__ */ React.createElement("h3", { className: "text-2xl font-extrabold text-forest-950 mt-2 mb-2" }, "Database & API Deployment"), /* @__PURE__ */ React.createElement("p", { className: "text-slate-600 text-sm mb-7 leading-relaxed" }, "On the demo domain, bookings, rooms, room types, queries, reviews, settings, and admin authentication use the server-side PHP API and MySQL database automatically."), /* @__PURE__ */ React.createElement("div", { className: "grid grid-cols-1 sm:grid-cols-2 gap-4 mb-7 text-sm" }, /* @__PURE__ */ React.createElement("div", { className: "p-5 bg-emerald-50 border border-emerald-100 rounded-lg" }, /* @__PURE__ */ React.createElement("span", { className: "text-xs uppercase font-bold text-emerald-700" }, "Website"), /* @__PURE__ */ React.createElement("code", { className: "block mt-2 text-slate-700" }, "https://demo.checkinnhomes.com/")), /* @__PURE__ */ React.createElement("div", { className: "p-5 bg-sky-50 border border-sky-100 rounded-lg" }, /* @__PURE__ */ React.createElement("span", { className: "text-xs uppercase font-bold text-sky-700" }, "API Endpoint"), /* @__PURE__ */ React.createElement("code", { className: "block mt-2 text-slate-700" }, "/api/index.php")), /* @__PURE__ */ React.createElement("div", { className: "p-5 bg-amber-50 border border-amber-100 rounded-lg" }, /* @__PURE__ */ React.createElement("span", { className: "text-xs uppercase font-bold text-amber-700" }, "MySQL Database"), /* @__PURE__ */ React.createElement("code", { className: "block mt-2 text-slate-700" }, "u605122432_checkinnhomes")), /* @__PURE__ */ React.createElement("div", { className: "p-5 bg-violet-50 border border-violet-100 rounded-lg" }, /* @__PURE__ */ React.createElement("span", { className: "text-xs uppercase font-bold text-violet-700" }, "Uploads"), /* @__PURE__ */ React.createElement("code", { className: "block mt-2 text-slate-700" }, "/api/uploads/"))), /* @__PURE__ */ React.createElement("div", { className: "p-5 border border-slate-200 rounded-lg mb-6" }, /* @__PURE__ */ React.createElement("h4", { className: "font-bold text-forest-950 mb-3" }, "Deployment Checklist"), /* @__PURE__ */ React.createElement("ol", { className: "space-y-2 text-sm text-slate-600 list-decimal pl-5" }, /* @__PURE__ */ React.createElement("li", null, "Upload the complete project into the demo subdomain document root."), /* @__PURE__ */ React.createElement("li", null, "Open ", /* @__PURE__ */ React.createElement("code", { className: "text-emerald-700" }, "/api/install.php?key=checkinn-install-2026"), " once."), /* @__PURE__ */ React.createElement("li", null, "Confirm the installer reports success, then delete ", /* @__PURE__ */ React.createElement("code", null, "api/install.php"), "."), /* @__PURE__ */ React.createElement("li", null, "Log in to Admin and use this connection test."))), /* @__PURE__ */ React.createElement("div", { className: "flex flex-col sm:flex-row sm:items-center gap-4" }, /* @__PURE__ */ React.createElement("button", { onClick: testApiConnection, className: "bg-forest-900 hover:bg-forest-800 text-white px-5 py-3 rounded-lg text-sm font-bold" }, "Test API Connection"), apiConnectionStatus !== "idle" && /* @__PURE__ */ React.createElement("p", { className: `text-sm font-semibold ${apiConnectionStatus.startsWith("Connected") ? "text-emerald-700" : apiConnectionStatus.startsWith("Testing") ? "text-sky-700" : "text-amber-700"}` }, apiConnectionStatus)), /* @__PURE__ */ React.createElement("div", { className: "mt-7 p-4 bg-red-50 border border-red-100 rounded-lg text-xs text-red-700" }, "Before production: change the database password, admin password, and install key in ", /* @__PURE__ */ React.createElement("code", null, "api/config.php"), "."))))), editingRoom && /* @__PURE__ */ React.createElement("div", { className: "fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" }, /* @__PURE__ */ React.createElement("div", { className: "bg-white rounded-xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl border border-slate-200 max-h-[92vh] overflow-y-auto" }, /* @__PURE__ */ React.createElement("div", { className: "flex justify-between items-center mb-6" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("p", { className: "text-xs font-bold uppercase tracking-widest text-emerald-700" }, "Room Management"), /* @__PURE__ */ React.createElement("h3", { className: "text-xl font-extrabold text-forest-950 mt-1" }, editingRoom.isNew ? "Add New Room" : `Edit Room: ${editingRoom.name}`)), /* @__PURE__ */ React.createElement("button", { onClick: () => setEditingRoom(null), className: "text-stone-400 hover:text-stone-700 font-bold text-lg" }, "\u2715")), /* @__PURE__ */ React.createElement("form", { onSubmit: handleSaveRoom, className: "space-y-4 text-xs" }, /* @__PURE__ */ React.createElement("div", { className: "grid grid-cols-1 sm:grid-cols-2 gap-4" }, /* @__PURE__ */ React.createElement("label", { className: "block" }, /* @__PURE__ */ React.createElement("span", { className: "block font-bold text-slate-500 mb-1" }, "Room Display Name *"), /* @__PURE__ */ React.createElement("input", { type: "text", value: editingRoom.name, onChange: (e) => setEditingRoom(__spreadProps(__spreadValues({}, editingRoom), { name: e.target.value })), className: "w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm font-medium", required: true })), /* @__PURE__ */ React.createElement("label", { className: "block" }, /* @__PURE__ */ React.createElement("span", { className: "block font-bold text-slate-500 mb-1" }, "Room Type *"), /* @__PURE__ */ React.createElement("select", { value: editingRoom.type, onChange: (e) => setEditingRoom(__spreadProps(__spreadValues({}, editingRoom), { type: e.target.value })), className: "w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm font-medium bg-white cursor-pointer", required: true }, /* @__PURE__ */ React.createElement("option", { value: "", disabled: true }, "Select room type"), roomTypes.map((type) => /* @__PURE__ */ React.createElement("option", { key: type, value: type }, type))))), /* @__PURE__ */ React.createElement("div", { className: "p-4 bg-amber-50 border border-amber-200 rounded-lg" }, /* @__PURE__ */ React.createElement("p", { className: "font-bold text-amber-800 mb-3" }, "Pricing Plans"), /* @__PURE__ */ React.createElement("div", { className: "grid grid-cols-1 sm:grid-cols-3 gap-3" }, /* @__PURE__ */ React.createElement("label", { className: "block" }, /* @__PURE__ */ React.createElement("span", { className: "block font-bold text-slate-500 mb-1" }, "Room Only (EP) \u20B9 *"), /* @__PURE__ */ React.createElement("input", { type: "number", min: "0", value: editingRoom.price, onChange: (e) => setEditingRoom(__spreadProps(__spreadValues({}, editingRoom), { price: Number(e.target.value) })), className: "w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm font-bold", required: true })), /* @__PURE__ */ React.createElement("label", { className: "block" }, /* @__PURE__ */ React.createElement("span", { className: "block font-bold text-slate-500 mb-1" }, "With Breakfast (CP) \u20B9"), /* @__PURE__ */ React.createElement("input", { type: "number", min: "0", value: editingRoom.breakfastPrice || "", onChange: (e) => setEditingRoom(__spreadProps(__spreadValues({}, editingRoom), { breakfastPrice: e.target.value })), className: "w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm font-bold" })), /* @__PURE__ */ React.createElement("label", { className: "block" }, /* @__PURE__ */ React.createElement("span", { className: "block font-bold text-slate-500 mb-1" }, "With Meals (MAP) \u20B9"), /* @__PURE__ */ React.createElement("input", { type: "number", min: "0", value: editingRoom.mealsPrice || "", onChange: (e) => setEditingRoom(__spreadProps(__spreadValues({}, editingRoom), { mealsPrice: e.target.value })), className: "w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm font-bold" }))), /* @__PURE__ */ React.createElement("p", { className: "text-[10px] text-amber-700 mt-2" }, "EP = Room Only | CP = Room + Breakfast | MAP = Room + Meals")), /* @__PURE__ */ React.createElement("div", { className: "max-w-xs" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "block font-bold text-slate-500 mb-1" }, "Original Price (\u20B9)"), /* @__PURE__ */ React.createElement(
+  ].map((field) => /* @__PURE__ */ React.createElement("label", { key: field.key, className: "block" }, /* @__PURE__ */ React.createElement("span", { className: "block text-xs font-bold uppercase tracking-wide text-slate-500 mb-2" }, field.label), /* @__PURE__ */ React.createElement("input", { type: field.type, value: hotelConfig[field.key] || "", onChange: (event) => setHotelConfig({ ...hotelConfig, [field.key]: event.target.value }), className: "w-full px-4 py-3 rounded-lg border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600" }))), /* @__PURE__ */ React.createElement("label", { className: "block md:col-span-2" }, /* @__PURE__ */ React.createElement("span", { className: "block text-xs font-bold uppercase tracking-wide text-slate-500 mb-2" }, "Property Address"), /* @__PURE__ */ React.createElement("textarea", { rows: "3", value: hotelConfig.location || "", onChange: (event) => setHotelConfig({ ...hotelConfig, location: event.target.value }), className: "w-full px-4 py-3 rounded-lg border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600" }))), /* @__PURE__ */ React.createElement("div", { className: "mt-7 pt-6 border-t border-slate-100 flex items-center gap-4" }, /* @__PURE__ */ React.createElement("button", { onClick: saveHotelSettings, className: "bg-forest-900 text-white px-6 py-3 rounded-lg text-sm font-bold hover:bg-forest-800" }, "Save Changes"), /* @__PURE__ */ React.createElement("span", { className: "text-xs text-slate-400" }, "Changes are automatically stored in this browser."))), adminTab === "mysql" && /* @__PURE__ */ React.createElement("div", { className: "bg-white rounded-xl p-6 sm:p-8 border border-slate-200 shadow-sm" }, /* @__PURE__ */ React.createElement("div", { className: "max-w-4xl" }, /* @__PURE__ */ React.createElement("span", { className: "text-emerald-600 font-bold text-xs uppercase tracking-wider font-mono" }, "Hostinger PHP + MySQL Integration"), /* @__PURE__ */ React.createElement("h3", { className: "text-2xl font-extrabold text-forest-950 mt-2 mb-2" }, "Database & API Deployment"), /* @__PURE__ */ React.createElement("p", { className: "text-slate-600 text-sm mb-7 leading-relaxed" }, "On the demo domain, bookings, rooms, room types, queries, reviews, settings, and admin authentication use the server-side PHP API and MySQL database automatically."), /* @__PURE__ */ React.createElement("div", { className: "grid grid-cols-1 sm:grid-cols-2 gap-4 mb-7 text-sm" }, /* @__PURE__ */ React.createElement("div", { className: "p-5 bg-emerald-50 border border-emerald-100 rounded-lg" }, /* @__PURE__ */ React.createElement("span", { className: "text-xs uppercase font-bold text-emerald-700" }, "Website"), /* @__PURE__ */ React.createElement("code", { className: "block mt-2 text-slate-700" }, "https://demo.checkinnhomes.com/")), /* @__PURE__ */ React.createElement("div", { className: "p-5 bg-sky-50 border border-sky-100 rounded-lg" }, /* @__PURE__ */ React.createElement("span", { className: "text-xs uppercase font-bold text-sky-700" }, "API Endpoint"), /* @__PURE__ */ React.createElement("code", { className: "block mt-2 text-slate-700" }, "/api/index.php")), /* @__PURE__ */ React.createElement("div", { className: "p-5 bg-amber-50 border border-amber-100 rounded-lg" }, /* @__PURE__ */ React.createElement("span", { className: "text-xs uppercase font-bold text-amber-700" }, "MySQL Database"), /* @__PURE__ */ React.createElement("code", { className: "block mt-2 text-slate-700" }, "u605122432_checkinnhomes")), /* @__PURE__ */ React.createElement("div", { className: "p-5 bg-violet-50 border border-violet-100 rounded-lg" }, /* @__PURE__ */ React.createElement("span", { className: "text-xs uppercase font-bold text-violet-700" }, "Uploads"), /* @__PURE__ */ React.createElement("code", { className: "block mt-2 text-slate-700" }, "/api/uploads/"))), /* @__PURE__ */ React.createElement("div", { className: "p-5 border border-slate-200 rounded-lg mb-6" }, /* @__PURE__ */ React.createElement("h4", { className: "font-bold text-forest-950 mb-3" }, "Deployment Checklist"), /* @__PURE__ */ React.createElement("ol", { className: "space-y-2 text-sm text-slate-600 list-decimal pl-5" }, /* @__PURE__ */ React.createElement("li", null, "Upload the complete project into the demo subdomain document root."), /* @__PURE__ */ React.createElement("li", null, "Open ", /* @__PURE__ */ React.createElement("code", { className: "text-emerald-700" }, "/api/install.php?key=checkinn-install-2026"), " once."), /* @__PURE__ */ React.createElement("li", null, "Confirm the installer reports success, then delete ", /* @__PURE__ */ React.createElement("code", null, "api/install.php"), "."), /* @__PURE__ */ React.createElement("li", null, "Log in to Admin and use this connection test."))), /* @__PURE__ */ React.createElement("div", { className: "flex flex-col sm:flex-row sm:items-center gap-4" }, /* @__PURE__ */ React.createElement("button", { onClick: testApiConnection, className: "bg-forest-900 hover:bg-forest-800 text-white px-5 py-3 rounded-lg text-sm font-bold" }, "Test API Connection"), apiConnectionStatus !== "idle" && /* @__PURE__ */ React.createElement("p", { className: `text-sm font-semibold ${apiConnectionStatus.startsWith("Connected") ? "text-emerald-700" : apiConnectionStatus.startsWith("Testing") ? "text-sky-700" : "text-amber-700"}` }, apiConnectionStatus)), /* @__PURE__ */ React.createElement("div", { className: "mt-7 p-4 bg-red-50 border border-red-100 rounded-lg text-xs text-red-700" }, "Before production: change the database password, admin password, and install key in ", /* @__PURE__ */ React.createElement("code", null, "api/config.php"), "."))))), editingRoom && /* @__PURE__ */ React.createElement("div", { className: "fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" }, /* @__PURE__ */ React.createElement("div", { className: "bg-white rounded-xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl border border-slate-200 max-h-[92vh] overflow-y-auto" }, /* @__PURE__ */ React.createElement("div", { className: "flex justify-between items-center mb-6" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("p", { className: "text-xs font-bold uppercase tracking-widest text-emerald-700" }, "Room Management"), /* @__PURE__ */ React.createElement("h3", { className: "text-xl font-extrabold text-forest-950 mt-1" }, editingRoom.isNew ? "Add New Room" : `Edit Room: ${editingRoom.name}`)), /* @__PURE__ */ React.createElement("button", { onClick: () => setEditingRoom(null), className: "text-stone-400 hover:text-stone-700 font-bold text-lg" }, "\u2715")), /* @__PURE__ */ React.createElement("form", { onSubmit: handleSaveRoom, className: "space-y-4 text-xs" }, /* @__PURE__ */ React.createElement("div", { className: "grid grid-cols-1 sm:grid-cols-2 gap-4" }, /* @__PURE__ */ React.createElement("label", { className: "block" }, /* @__PURE__ */ React.createElement("span", { className: "block font-bold text-slate-500 mb-1" }, "Room Display Name *"), /* @__PURE__ */ React.createElement("input", { type: "text", value: editingRoom.name, onChange: (e) => setEditingRoom({ ...editingRoom, name: e.target.value }), className: "w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm font-medium", required: true })), /* @__PURE__ */ React.createElement("label", { className: "block" }, /* @__PURE__ */ React.createElement("span", { className: "block font-bold text-slate-500 mb-1" }, "Room Type *"), /* @__PURE__ */ React.createElement("select", { value: editingRoom.type, onChange: (e) => setEditingRoom({ ...editingRoom, type: e.target.value }), className: "w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm font-medium bg-white cursor-pointer", required: true }, /* @__PURE__ */ React.createElement("option", { value: "", disabled: true }, "Select room type"), roomTypes.map((type) => /* @__PURE__ */ React.createElement("option", { key: type, value: type }, type))))), /* @__PURE__ */ React.createElement("div", { className: "p-4 bg-amber-50 border border-amber-200 rounded-lg" }, /* @__PURE__ */ React.createElement("p", { className: "font-bold text-amber-800 mb-3" }, "Pricing Plans"), /* @__PURE__ */ React.createElement("div", { className: "grid grid-cols-1 sm:grid-cols-3 gap-3" }, /* @__PURE__ */ React.createElement("label", { className: "block" }, /* @__PURE__ */ React.createElement("span", { className: "block font-bold text-slate-500 mb-1" }, "Room Only (EP) \u20B9 *"), /* @__PURE__ */ React.createElement("input", { type: "number", min: "0", value: editingRoom.price, onChange: (e) => setEditingRoom({ ...editingRoom, price: Number(e.target.value) }), className: "w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm font-bold", required: true })), /* @__PURE__ */ React.createElement("label", { className: "block" }, /* @__PURE__ */ React.createElement("span", { className: "block font-bold text-slate-500 mb-1" }, "With Breakfast (CP) \u20B9"), /* @__PURE__ */ React.createElement("input", { type: "number", min: "0", value: editingRoom.breakfastPrice || "", onChange: (e) => setEditingRoom({ ...editingRoom, breakfastPrice: e.target.value }), className: "w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm font-bold" })), /* @__PURE__ */ React.createElement("label", { className: "block" }, /* @__PURE__ */ React.createElement("span", { className: "block font-bold text-slate-500 mb-1" }, "With Meals (MAP) \u20B9"), /* @__PURE__ */ React.createElement("input", { type: "number", min: "0", value: editingRoom.mealsPrice || "", onChange: (e) => setEditingRoom({ ...editingRoom, mealsPrice: e.target.value }), className: "w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm font-bold" }))), /* @__PURE__ */ React.createElement("p", { className: "text-[10px] text-amber-700 mt-2" }, "EP = Room Only | CP = Room + Breakfast | MAP = Room + Meals")), /* @__PURE__ */ React.createElement("div", { className: "max-w-xs" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "block font-bold text-slate-500 mb-1" }, "Original Price (\u20B9)"), /* @__PURE__ */ React.createElement(
     "input",
     {
       type: "number",
       min: "0",
       value: editingRoom.originalPrice || "",
-      onChange: (e) => setEditingRoom(__spreadProps(__spreadValues({}, editingRoom), { originalPrice: e.target.value })),
+      onChange: (e) => setEditingRoom({ ...editingRoom, originalPrice: e.target.value }),
       className: "w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm font-medium"
     }
-  ))), /* @__PURE__ */ React.createElement("div", { className: "grid grid-cols-1 sm:grid-cols-3 gap-4" }, /* @__PURE__ */ React.createElement("label", { className: "block" }, /* @__PURE__ */ React.createElement("span", { className: "block font-bold text-slate-500 mb-1" }, "Capacity *"), /* @__PURE__ */ React.createElement("input", { type: "text", value: editingRoom.capacity, onChange: (e) => setEditingRoom(__spreadProps(__spreadValues({}, editingRoom), { capacity: e.target.value })), className: "w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm", required: true })), /* @__PURE__ */ React.createElement("label", { className: "block" }, /* @__PURE__ */ React.createElement("span", { className: "block font-bold text-slate-500 mb-1" }, "Bed Type *"), /* @__PURE__ */ React.createElement("input", { type: "text", value: editingRoom.bed, onChange: (e) => setEditingRoom(__spreadProps(__spreadValues({}, editingRoom), { bed: e.target.value })), className: "w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm", required: true })), /* @__PURE__ */ React.createElement("label", { className: "block" }, /* @__PURE__ */ React.createElement("span", { className: "block font-bold text-slate-500 mb-1" }, "Room Size"), /* @__PURE__ */ React.createElement("input", { type: "text", value: editingRoom.size || "", onChange: (e) => setEditingRoom(__spreadProps(__spreadValues({}, editingRoom), { size: e.target.value })), placeholder: "e.g. 320 sq.ft", className: "w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm" }))), /* @__PURE__ */ React.createElement("div", { className: "p-4 sm:p-5 bg-sky-50/60 border border-sky-200 rounded-lg" }, /* @__PURE__ */ React.createElement("div", { className: "flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("p", { className: "font-bold text-slate-800" }, "Room Photos *"), /* @__PURE__ */ React.createElement("p", { className: "text-[11px] text-slate-500 mt-0.5" }, "Add multiple photos and select one as the main image.")), /* @__PURE__ */ React.createElement("label", { className: "inline-flex items-center justify-center gap-2 bg-forest-900 hover:bg-forest-800 text-white px-4 py-2.5 rounded-lg text-xs font-bold cursor-pointer" }, /* @__PURE__ */ React.createElement("span", null, "\uFF0B"), " Upload Photos", /* @__PURE__ */ React.createElement("input", { type: "file", accept: "image/*", multiple: true, onChange: uploadRoomImages, className: "sr-only" }))), /* @__PURE__ */ React.createElement("div", { className: "flex flex-col sm:flex-row gap-2 mb-4" }, /* @__PURE__ */ React.createElement(
+  ))), /* @__PURE__ */ React.createElement("div", { className: "grid grid-cols-1 sm:grid-cols-3 gap-4" }, /* @__PURE__ */ React.createElement("label", { className: "block" }, /* @__PURE__ */ React.createElement("span", { className: "block font-bold text-slate-500 mb-1" }, "Capacity *"), /* @__PURE__ */ React.createElement("input", { type: "text", value: editingRoom.capacity, onChange: (e) => setEditingRoom({ ...editingRoom, capacity: e.target.value }), className: "w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm", required: true })), /* @__PURE__ */ React.createElement("label", { className: "block" }, /* @__PURE__ */ React.createElement("span", { className: "block font-bold text-slate-500 mb-1" }, "Bed Type *"), /* @__PURE__ */ React.createElement("input", { type: "text", value: editingRoom.bed, onChange: (e) => setEditingRoom({ ...editingRoom, bed: e.target.value }), className: "w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm", required: true })), /* @__PURE__ */ React.createElement("label", { className: "block" }, /* @__PURE__ */ React.createElement("span", { className: "block font-bold text-slate-500 mb-1" }, "Room Size"), /* @__PURE__ */ React.createElement("input", { type: "text", value: editingRoom.size || "", onChange: (e) => setEditingRoom({ ...editingRoom, size: e.target.value }), placeholder: "e.g. 320 sq.ft", className: "w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm" }))), /* @__PURE__ */ React.createElement("div", { className: "p-4 sm:p-5 bg-sky-50/60 border border-sky-200 rounded-lg" }, /* @__PURE__ */ React.createElement("div", { className: "flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("p", { className: "font-bold text-slate-800" }, "Room Photos *"), /* @__PURE__ */ React.createElement("p", { className: "text-[11px] text-slate-500 mt-0.5" }, "Add multiple photos and select one as the main image.")), /* @__PURE__ */ React.createElement("label", { className: "inline-flex items-center justify-center gap-2 bg-forest-900 hover:bg-forest-800 text-white px-4 py-2.5 rounded-lg text-xs font-bold cursor-pointer" }, /* @__PURE__ */ React.createElement("span", null, "\uFF0B"), " Upload Photos", /* @__PURE__ */ React.createElement("input", { type: "file", accept: "image/*", multiple: true, onChange: uploadRoomImages, className: "sr-only" }))), /* @__PURE__ */ React.createElement("div", { className: "flex flex-col sm:flex-row gap-2 mb-4" }, /* @__PURE__ */ React.createElement(
     "input",
     {
       type: "url",
       value: editingRoom.newGalleryUrl || "",
-      onChange: (event) => setEditingRoom(__spreadProps(__spreadValues({}, editingRoom), { newGalleryUrl: event.target.value })),
+      onChange: (event) => setEditingRoom({ ...editingRoom, newGalleryUrl: event.target.value }),
       onKeyDown: (event) => {
         if (event.key === "Enter") {
           event.preventDefault();
@@ -1580,15 +1535,15 @@ function AdminPanel({
       placeholder: "Paste image URL",
       className: "flex-1 px-3 py-2.5 border border-slate-200 rounded-lg text-xs font-mono bg-white"
     }
-  ), /* @__PURE__ */ React.createElement("button", { type: "button", onClick: addRoomImageUrl, className: "px-4 py-2.5 border border-sky-300 bg-white text-sky-700 hover:bg-sky-100 rounded-lg text-xs font-bold" }, "Add URL")), ((_b = editingRoom.gallery) == null ? void 0 : _b.length) ? /* @__PURE__ */ React.createElement("div", { className: "grid grid-cols-2 sm:grid-cols-3 gap-3" }, Array.from(new Set([editingRoom.image, ...editingRoom.gallery].filter(Boolean))).map((imageUrl, index) => {
+  ), /* @__PURE__ */ React.createElement("button", { type: "button", onClick: addRoomImageUrl, className: "px-4 py-2.5 border border-sky-300 bg-white text-sky-700 hover:bg-sky-100 rounded-lg text-xs font-bold" }, "Add URL")), editingRoom.gallery?.length ? /* @__PURE__ */ React.createElement("div", { className: "grid grid-cols-2 sm:grid-cols-3 gap-3" }, Array.from(new Set([editingRoom.image, ...editingRoom.gallery].filter(Boolean))).map((imageUrl, index) => {
     const isMain = editingRoom.image === imageUrl;
     return /* @__PURE__ */ React.createElement("div", { key: `${imageUrl.slice(0, 80)}-${index}`, className: `relative bg-white border-2 rounded-lg overflow-hidden ${isMain ? "border-amber-500" : "border-slate-200"}` }, /* @__PURE__ */ React.createElement("img", { src: imageUrl, alt: `Room photo ${index + 1}`, className: "w-full aspect-[4/3] object-cover" }), isMain && /* @__PURE__ */ React.createElement("span", { className: "absolute top-2 left-2 bg-amber-500 text-forest-950 px-2 py-1 rounded text-[9px] font-black uppercase" }, "Main Image"), /* @__PURE__ */ React.createElement("div", { className: "grid grid-cols-2 border-t border-slate-100" }, /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => setMainRoomImage(imageUrl), disabled: isMain, className: "px-2 py-2 text-[10px] font-bold text-emerald-700 hover:bg-emerald-50 disabled:text-slate-300 disabled:bg-slate-50" }, isMain ? "Selected" : "Set Main"), /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => removeRoomImage(imageUrl), className: "px-2 py-2 text-[10px] font-bold text-red-600 hover:bg-red-50 border-l border-slate-100" }, "Remove")));
-  })) : /* @__PURE__ */ React.createElement("div", { className: "border border-dashed border-sky-300 bg-white py-8 text-center text-xs text-slate-400 rounded-lg" }, "No photos added yet. Upload photos or add an image URL.")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "block font-bold text-slate-500 mb-1" }, "Amenities (comma separated)"), /* @__PURE__ */ React.createElement("input", { type: "text", value: (_c = editingRoom.amenitiesText) != null ? _c : editingRoom.amenities.join(", "), onChange: (e) => setEditingRoom(__spreadProps(__spreadValues({}, editingRoom), { amenitiesText: e.target.value })), placeholder: "Wi-Fi, AC, TV, Private Bathroom", className: "w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm" })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "block font-bold text-slate-500 mb-1" }, "Room Description *"), /* @__PURE__ */ React.createElement(
+  })) : /* @__PURE__ */ React.createElement("div", { className: "border border-dashed border-sky-300 bg-white py-8 text-center text-xs text-slate-400 rounded-lg" }, "No photos added yet. Upload photos or add an image URL.")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "block font-bold text-slate-500 mb-1" }, "Amenities (comma separated)"), /* @__PURE__ */ React.createElement("input", { type: "text", value: editingRoom.amenitiesText ?? editingRoom.amenities.join(", "), onChange: (e) => setEditingRoom({ ...editingRoom, amenitiesText: e.target.value }), placeholder: "Wi-Fi, AC, TV, Private Bathroom", className: "w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm" })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "block font-bold text-slate-500 mb-1" }, "Room Description *"), /* @__PURE__ */ React.createElement(
     "textarea",
     {
       rows: "3",
       value: editingRoom.description,
-      onChange: (e) => setEditingRoom(__spreadProps(__spreadValues({}, editingRoom), { description: e.target.value })),
+      onChange: (e) => setEditingRoom({ ...editingRoom, description: e.target.value }),
       className: "w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm font-medium",
       required: true
     }
@@ -1678,7 +1633,7 @@ function BookingEngineModal({ rooms, selectedRoom, initialDates, onClose, onConf
     {
       type: "date",
       value: formData.checkIn,
-      onChange: (e) => setFormData(__spreadProps(__spreadValues({}, formData), { checkIn: e.target.value })),
+      onChange: (e) => setFormData({ ...formData, checkIn: e.target.value }),
       className: "w-full px-3 py-2 rounded-xl border border-stone-300 text-xs font-bold bg-white text-forest-950",
       required: true
     }
@@ -1687,7 +1642,7 @@ function BookingEngineModal({ rooms, selectedRoom, initialDates, onClose, onConf
     {
       type: "date",
       value: formData.checkOut,
-      onChange: (e) => setFormData(__spreadProps(__spreadValues({}, formData), { checkOut: e.target.value })),
+      onChange: (e) => setFormData({ ...formData, checkOut: e.target.value }),
       className: "w-full px-3 py-2 rounded-xl border border-stone-300 text-xs font-bold bg-white text-forest-950",
       required: true
     }
@@ -1695,7 +1650,7 @@ function BookingEngineModal({ rooms, selectedRoom, initialDates, onClose, onConf
     "select",
     {
       value: formData.guests,
-      onChange: (e) => setFormData(__spreadProps(__spreadValues({}, formData), { guests: Number(e.target.value) })),
+      onChange: (e) => setFormData({ ...formData, guests: Number(e.target.value) }),
       className: "w-full px-3 py-2 rounded-xl border border-stone-300 text-xs font-bold bg-white text-forest-950 cursor-pointer"
     },
     /* @__PURE__ */ React.createElement("option", { value: "1" }, "1 Person"),
@@ -1708,7 +1663,7 @@ function BookingEngineModal({ rooms, selectedRoom, initialDates, onClose, onConf
       type: "text",
       placeholder: "e.g. Maya Patel",
       value: formData.guestName,
-      onChange: (e) => setFormData(__spreadProps(__spreadValues({}, formData), { guestName: e.target.value })),
+      onChange: (e) => setFormData({ ...formData, guestName: e.target.value }),
       className: "w-full px-4 py-2.5 rounded-xl border border-stone-200 text-sm font-medium bg-stone-50/50 focus:outline-none focus:ring-2 focus:ring-forest-800",
       required: true
     }
@@ -1718,7 +1673,7 @@ function BookingEngineModal({ rooms, selectedRoom, initialDates, onClose, onConf
       type: "tel",
       placeholder: "e.g. +91 98765 00000",
       value: formData.phone,
-      onChange: (e) => setFormData(__spreadProps(__spreadValues({}, formData), { phone: e.target.value })),
+      onChange: (e) => setFormData({ ...formData, phone: e.target.value }),
       className: "w-full px-4 py-2.5 rounded-xl border border-stone-200 text-sm font-medium bg-stone-50/50 focus:outline-none focus:ring-2 focus:ring-forest-800",
       required: true
     }
@@ -1727,7 +1682,7 @@ function BookingEngineModal({ rooms, selectedRoom, initialDates, onClose, onConf
     {
       type: "checkbox",
       checked: formData.addRafting,
-      onChange: (e) => setFormData(__spreadProps(__spreadValues({}, formData), { addRafting: e.target.checked })),
+      onChange: (e) => setFormData({ ...formData, addRafting: e.target.checked }),
       className: "rounded text-forest-900 focus:ring-forest-800 w-4 h-4"
     }
   ), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "font-bold text-forest-950" }, "16km River Rafting"), /* @__PURE__ */ React.createElement("p", { className: "text-[11px] text-stone-500" }, "+\u20B9850/person with pickup"))), /* @__PURE__ */ React.createElement("label", { className: "flex items-center gap-2.5 p-3 rounded-xl border border-stone-200 cursor-pointer hover:bg-stone-50" }, /* @__PURE__ */ React.createElement(
@@ -1735,7 +1690,7 @@ function BookingEngineModal({ rooms, selectedRoom, initialDates, onClose, onConf
     {
       type: "checkbox",
       checked: formData.addScooty,
-      onChange: (e) => setFormData(__spreadProps(__spreadValues({}, formData), { addScooty: e.target.checked })),
+      onChange: (e) => setFormData({ ...formData, addScooty: e.target.checked }),
       className: "rounded text-forest-900 focus:ring-forest-800 w-4 h-4"
     }
   ), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "font-bold text-forest-950" }, "Daily Scooty Rental"), /* @__PURE__ */ React.createElement("p", { className: "text-[11px] text-stone-500" }, "+\u20B9500/day doorstep delivery"))))), /* @__PURE__ */ React.createElement("div", { className: "bg-forest-950 text-white p-5 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "text-xs text-stone-300" }, nights, " Night(s) Stay \u2022 ", currentRoom.name), /* @__PURE__ */ React.createElement("div", { className: "font-serif text-2xl font-bold text-amber-300 mt-0.5" }, "Total: \u20B9", totalAmount.toLocaleString("en-IN")), /* @__PURE__ */ React.createElement("p", { className: "text-[10px] text-emerald-400" }, "\u2713 Pay on arrival in Upper Tapovan")), /* @__PURE__ */ React.createElement(

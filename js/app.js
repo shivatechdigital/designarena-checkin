@@ -2325,12 +2325,12 @@
                     <p className="text-xs font-bold uppercase tracking-widest text-emerald-700">Check In Homes</p>
                     <h1 className="text-xl sm:text-2xl font-extrabold text-forest-950">{adminNavItems.find((item) => item.id === adminTab)?.label}</h1>
                   </div>
-                  <div className="hidden sm:flex items-center gap-5">
-                    <div className="relative">
+                  <div className="flex items-center gap-3 sm:gap-5">
+                    <div className="relative hidden sm:block">
                       <span className="absolute left-3 top-2.5 text-slate-400">⌕</span>
                       <input value={bookingSearch} onChange={(event) => setBookingSearch(event.target.value)} onFocus={() => setAdminTab('bookings')} placeholder="Search bookings..." className="w-64 bg-slate-50 border border-slate-200 rounded-lg py-2 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600" />
                     </div>
-                    <span className="text-xs text-slate-500">{new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                    <span className="hidden sm:inline text-xs text-slate-500">{new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
                     <span className="w-10 h-10 rounded-full bg-forest-900 text-amber-300 flex items-center justify-center font-bold">A</span>
                   </div>
                 </div>
