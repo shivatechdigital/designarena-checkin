@@ -1873,6 +1873,7 @@
       const [apiConnectionStatus, setApiConnectionStatus] = useState('idle');
       const [couponDraft, setCouponDraft] = useState({ code: '', discountType: 'percentage', discountValue: 10, minimumAmount: 0, active: true });
       const [editingCouponId, setEditingCouponId] = useState(null);
+      const [editingBooking, setEditingBooking] = useState(null);
 
       // Room Editor Modal state
       const [editingRoom, setEditingRoom] = useState(null);
@@ -2207,6 +2208,25 @@
         } catch (error) { showToast(error.message, 'error'); }
       };
 
+      const toggleCouponActive = async (coupon) => {
+        try {
+          const updatedCoupon = { ...coupon, active: !coupon.active };
+          const savedCoupon = API_ENABLED ? await apiRequest('coupons', { method: 'PUT', body: updatedCoupon }) : updatedCoupon;
+          setCoupons(coupons.map((item) => item.id === savedCoupon.id ? savedCoupon : item));
+          showToast(`${savedCoupon.code} is now ${savedCoupon.active ? 'active' : 'inactive'}.`);
+        } catch (error) { showToast(error.message, 'error'); }
+      };
+
+      const saveBookingEdit = async (event) => {
+        event.preventDefault();
+        try {
+          const savedBooking = API_ENABLED ? await apiRequest('bookings', { method: 'PUT', body: editingBooking }) : editingBooking;
+          setBookings(bookings.map((booking) => booking.id === savedBooking.id ? savedBooking : booking));
+          setEditingBooking(null);
+          showToast('Booking updated.');
+        } catch (error) { showToast(error.message, 'error'); }
+      };
+
       const testApiConnection = async () => {
         if (!API_ENABLED) {
           setApiConnectionStatus('Upload the project to demo.checkinnhomes.com to test MySQL.');
@@ -2231,6 +2251,7 @@
             if (data.rooms) setRooms(data.rooms);
             if (data.roomTypes) setRoomTypes(data.roomTypes);
             if (data.reviews) setReviews(data.reviews);
+            if (data.coupons) setCoupons(data.coupons);
             if (data.bookings) setBookings(data.bookings);
             if (data.queries) setQueries(data.queries);
             if (data.hotelConfig) setHotelConfig((current) => ({ ...current, ...data.hotelConfig }));
@@ -2325,7 +2346,7 @@
       return (
         <div className="min-h-screen bg-[#f5f7fb] text-slate-800">
           <div className="flex min-h-screen">
-            <aside className="hidden lg:flex w-64 shrink-0 bg-white border-r border-slate-200 px-5 py-7 flex-col sticky top-0 h-screen">
+            <aside className="hidden lg:flex w-64 shrink-0 bg-white border-r border-slate-200 px-5 py-7 flex-col sticky top-0 h-screen overflow-y-auto">
               <button onClick={() => navigateToPage('home')} className="flex items-center gap-3 px-2 mb-10 text-left">
                 <span className="w-11 h-11 bg-forest-900 text-amber-300 flex items-center justify-center font-serif text-2xl font-bold rounded-lg">C</span>
                 <span>
@@ -2579,6 +2600,7 @@
                         >
                           <span>💬</span> WhatsApp Guest
                         </a>
+                        <button onClick={() => setEditingBooking({ ...book })} className="px-3 py-2 border border-emerald-200 text-emerald-700 hover:bg-emerald-50 text-xs font-bold rounded-xl">Edit</button>
                         <button onClick={() => deleteBooking(book.id)} className="w-9 h-9 border border-red-200 text-red-500 hover:bg-red-50 rounded-lg" title="Delete booking" aria-label={`Delete booking ${book.id}`}>×</button>
                       </div>
                     </div>
@@ -2809,7 +2831,7 @@
                   <input type="number" min="0" value={couponDraft.minimumAmount} onChange={(event) => setCouponDraft({ ...couponDraft, minimumAmount: Number(event.target.value) })} placeholder="Minimum amount" className="px-3 py-2.5 border border-slate-200 rounded-lg text-sm" required />
                   <div className="flex gap-2"><button type="submit" className="bg-forest-900 text-white px-4 py-2.5 rounded-lg text-sm font-bold">{editingCouponId !== null ? 'Save Coupon' : 'Add Coupon'}</button>{editingCouponId !== null && <button type="button" onClick={() => { setEditingCouponId(null); setCouponDraft({ code: '', discountType: 'percentage', discountValue: 10, minimumAmount: 0, active: true }); }} className="border border-slate-200 bg-white px-3 py-2.5 rounded-lg text-sm">Cancel</button>}</div>
                 </form>
-                <div className="space-y-2">{coupons.length === 0 ? <p className="text-sm text-slate-400 py-5">No coupons added yet.</p> : coupons.map((coupon) => <div key={coupon.id} className="flex items-center justify-between gap-3 p-4 border border-slate-200 rounded-lg"><span className="font-bold text-forest-950">{coupon.code}</span><span className="text-xs text-slate-500">{coupon.discountType === 'fixed' ? `Rs ${coupon.discountValue} off` : `${coupon.discountValue}% off`} on Rs {Number(coupon.minimumAmount).toLocaleString('en-IN')}+</span><div className="flex gap-3"><button onClick={() => startEditingCoupon(coupon)} className="text-xs font-bold text-emerald-700">Edit</button><button onClick={() => deleteCoupon(coupon.id)} className="text-xs font-bold text-red-600">Delete</button></div></div>)}</div>
+                <div className="space-y-2">{coupons.length === 0 ? <p className="text-sm text-slate-400 py-5">No coupons added yet.</p> : coupons.map((coupon) => <div key={coupon.id} className="flex items-center justify-between gap-3 p-4 border border-slate-200 rounded-lg"><span className="font-bold text-forest-950">{coupon.code}</span><span className="text-xs text-slate-500">{coupon.discountType === 'fixed' ? `Rs ${coupon.discountValue} off` : `${coupon.discountValue}% off`} on Rs {Number(coupon.minimumAmount).toLocaleString('en-IN')}+</span><div className="flex items-center gap-3"><button onClick={() => toggleCouponActive(coupon)} className={`text-xs font-bold ${coupon.active ? 'text-amber-700' : 'text-emerald-700'}`}>{coupon.active ? 'Deactivate' : 'Activate'}</button><button onClick={() => startEditingCoupon(coupon)} className="text-xs font-bold text-emerald-700">Edit</button><button onClick={() => deleteCoupon(coupon.id)} className="text-xs font-bold text-red-600">Delete</button></div></div>)}</div>
               </div>
             )}
 
@@ -3044,6 +3066,27 @@
                       {editingRoom.isNew ? 'Add Room' : 'Save Changes'}
                     </button>
                   </div>
+                </form>
+              </div>
+            </div>
+          )}
+          {editingBooking && (
+            <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+              <div className="w-full max-w-2xl max-h-[92vh] overflow-y-auto bg-white rounded-xl shadow-2xl p-6 sm:p-8">
+                <div className="flex items-start justify-between gap-4 mb-6"><div><h3 className="text-xl font-extrabold text-forest-950">Edit Booking</h3><p className="text-xs text-slate-500 mt-1">{editingBooking.id}</p></div><button onClick={() => setEditingBooking(null)} className="w-9 h-9 border border-slate-200 rounded-lg text-slate-500" aria-label="Close booking editor">x</button></div>
+                <form onSubmit={saveBookingEdit} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <label className="block text-xs font-bold text-slate-600">Guest Name<input value={editingBooking.guestName} onChange={(event) => setEditingBooking({ ...editingBooking, guestName: event.target.value })} className="mt-1.5 w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm" required /></label>
+                  <label className="block text-xs font-bold text-slate-600">Email<input type="email" value={editingBooking.email} onChange={(event) => setEditingBooking({ ...editingBooking, email: event.target.value })} className="mt-1.5 w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm" required /></label>
+                  <label className="block text-xs font-bold text-slate-600">Contact Number<input value={editingBooking.phone} onChange={(event) => setEditingBooking({ ...editingBooking, phone: event.target.value })} className="mt-1.5 w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm" required /></label>
+                  <label className="block text-xs font-bold text-slate-600">Room<input value={editingBooking.roomName} onChange={(event) => setEditingBooking({ ...editingBooking, roomName: event.target.value })} className="mt-1.5 w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm" required /></label>
+                  <label className="block text-xs font-bold text-slate-600">Check-in<input type="date" value={editingBooking.checkIn} onChange={(event) => setEditingBooking({ ...editingBooking, checkIn: event.target.value })} className="mt-1.5 w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm" required /></label>
+                  <label className="block text-xs font-bold text-slate-600">Check-out<input type="date" value={editingBooking.checkOut} onChange={(event) => setEditingBooking({ ...editingBooking, checkOut: event.target.value })} className="mt-1.5 w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm" required /></label>
+                  <label className="block text-xs font-bold text-slate-600">Guests<input type="number" min="1" value={editingBooking.guests} onChange={(event) => setEditingBooking({ ...editingBooking, guests: Number(event.target.value) })} className="mt-1.5 w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm" required /></label>
+                  <label className="block text-xs font-bold text-slate-600">Total Amount (Rs)<input type="number" min="0" value={editingBooking.totalAmount} onChange={(event) => setEditingBooking({ ...editingBooking, totalAmount: Number(event.target.value) })} className="mt-1.5 w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm" required /></label>
+                  <label className="block text-xs font-bold text-slate-600">Payment Mode<select value={editingBooking.paymentMode} onChange={(event) => setEditingBooking({ ...editingBooking, paymentMode: event.target.value })} className="mt-1.5 w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm"><option>Cash on Check-in</option><option>Pay Online</option></select></label>
+                  <label className="block text-xs font-bold text-slate-600">Status<select value={editingBooking.status} onChange={(event) => setEditingBooking({ ...editingBooking, status: event.target.value })} className="mt-1.5 w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm"><option>Confirmed</option><option>Checked-In</option><option>Completed</option><option>Cancelled</option></select></label>
+                  <label className="block sm:col-span-2 text-xs font-bold text-slate-600">Notes<textarea rows="3" value={editingBooking.notes || ''} onChange={(event) => setEditingBooking({ ...editingBooking, notes: event.target.value })} className="mt-1.5 w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm" /></label>
+                  <div className="sm:col-span-2 flex justify-end gap-3 pt-3"><button type="button" onClick={() => setEditingBooking(null)} className="px-5 py-2.5 border border-slate-200 rounded-lg text-sm font-bold text-slate-600">Cancel</button><button type="submit" className="px-5 py-2.5 bg-forest-900 text-white rounded-lg text-sm font-bold">Save Booking</button></div>
                 </form>
               </div>
             </div>

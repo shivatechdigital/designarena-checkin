@@ -17,6 +17,7 @@ try {
         if (is_admin()) {
             $response['bookings'] = array_map('booking_from_row', db()->query('SELECT * FROM bookings ORDER BY created_at DESC')->fetchAll());
             $response['queries'] = array_map('query_from_row', db()->query('SELECT * FROM queries ORDER BY created_at DESC')->fetchAll());
+            $response['coupons'] = array_map('coupon_from_row', db()->query('SELECT * FROM coupons ORDER BY created_at DESC')->fetchAll());
             $response['csrfToken'] = csrf_token();
         }
         json_response($response);
@@ -105,6 +106,15 @@ try {
         if ($method === 'GET') json_response(array_map('booking_from_row', db()->query('SELECT * FROM bookings ORDER BY created_at DESC')->fetchAll()));
         if (in_array($method, ['PUT','PATCH'], true)) {
             require_fields($body, ['id','status']);
+            $bookingFields = ['guestName', 'email', 'phone', 'roomName', 'checkIn', 'checkOut', 'guests', 'totalAmount', 'paymentMode', 'notes'];
+            $hasBookingEdits = array_intersect(array_keys($body), $bookingFields) !== [];
+            if ($hasBookingEdits) {
+                require_fields($body, ['guestName', 'email', 'phone', 'roomName', 'checkIn', 'checkOut']);
+                $stmt = db()->prepare('UPDATE bookings SET guest_name=?, email=?, phone=?, room_name=?, check_in=?, check_out=?, guests=?, total_amount=?, status=?, payment_mode=?, notes=? WHERE id=?');
+                $stmt->execute([$body['guestName'], $body['email'], $body['phone'], $body['roomName'], $body['checkIn'], $body['checkOut'], (int)($body['guests'] ?? 1), (int)($body['totalAmount'] ?? 0), $body['status'], $body['paymentMode'] ?? '', $body['notes'] ?? '', $body['id']]);
+                $stmt = db()->prepare('SELECT * FROM bookings WHERE id=?'); $stmt->execute([$body['id']]);
+                json_response(booking_from_row($stmt->fetch()));
+            }
             $stmt = db()->prepare('UPDATE bookings SET status=? WHERE id=?'); $stmt->execute([$body['status'],$body['id']]);
             json_response(['ok' => true]);
         }
