@@ -12,7 +12,8 @@ try {
         $rooms = array_map('room_from_row', db()->query('SELECT * FROM rooms ORDER BY created_at, id')->fetchAll());
         $types = array_column(db()->query('SELECT name FROM room_types ORDER BY name')->fetchAll(), 'name');
         $reviews = array_map('review_from_row', db()->query('SELECT * FROM reviews WHERE approved=1 ORDER BY created_at DESC')->fetchAll());
-        $response = ['rooms' => $rooms, 'roomTypes' => $types, 'reviews' => $reviews, 'hotelConfig' => settings_data()];
+        $coupons = array_map('coupon_from_row', db()->query('SELECT * FROM coupons WHERE active=1 ORDER BY discount_percent DESC')->fetchAll());
+        $response = ['rooms' => $rooms, 'roomTypes' => $types, 'reviews' => $reviews, 'coupons' => $coupons, 'hotelConfig' => settings_data()];
         if (is_admin()) {
             $response['bookings'] = array_map('booking_from_row', db()->query('SELECT * FROM bookings ORDER BY created_at DESC')->fetchAll());
             $response['queries'] = array_map('query_from_row', db()->query('SELECT * FROM queries ORDER BY created_at DESC')->fetchAll());
@@ -92,11 +93,13 @@ try {
 
     if ($resource === 'bookings') {
         if ($method === 'POST') {
-            require_fields($body, ['id','guestName','phone','roomName','checkIn','checkOut']);
+            require_fields($body, ['id','guestName','email','phone','roomName','checkIn','checkOut']);
             $stmt = db()->prepare('INSERT INTO bookings (id,guest_name,email,phone,room_name,check_in,check_out,guests,total_amount,status,payment_mode,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)');
             $stmt->execute([$body['id'],$body['guestName'],$body['email']??'',$body['phone'],$body['roomName'],$body['checkIn'],$body['checkOut'],(int)($body['guests']??1),(int)($body['totalAmount']??0),'Confirmed',$body['paymentMode']??'Direct Host Reservation',$body['notes']??'']);
             $stmt = db()->prepare('SELECT * FROM bookings WHERE id=?'); $stmt->execute([$body['id']]);
-            json_response(booking_from_row($stmt->fetch()), 201);
+            $booking = booking_from_row($stmt->fetch());
+            $booking['emailSent'] = send_booking_confirmation($booking);
+            json_response($booking, 201);
         }
         require_admin();
         if ($method === 'GET') json_response(array_map('booking_from_row', db()->query('SELECT * FROM bookings ORDER BY created_at DESC')->fetchAll()));
@@ -107,6 +110,23 @@ try {
         }
         if ($method === 'DELETE') {
             require_fields($body, ['id']); $stmt = db()->prepare('DELETE FROM bookings WHERE id=?'); $stmt->execute([$body['id']]); json_response(['ok'=>true]);
+        }
+    }
+
+    if ($resource === 'coupons') {
+        if ($method === 'GET') json_response(array_map('coupon_from_row', db()->query('SELECT * FROM coupons ORDER BY created_at DESC')->fetchAll()));
+        require_admin();
+        if ($method === 'POST') {
+            require_fields($body, ['code', 'discountPercent']);
+            $stmt = db()->prepare('INSERT INTO coupons (code,discount_percent,minimum_amount,active) VALUES (?,?,?,?)');
+            $stmt->execute([strtoupper(trim((string)$body['code'])), (int)$body['discountPercent'], (int)($body['minimumAmount'] ?? 0), !empty($body['active']) ? 1 : 0]);
+            $stmt = db()->prepare('SELECT * FROM coupons WHERE id=?'); $stmt->execute([(int)db()->lastInsertId()]);
+            json_response(coupon_from_row($stmt->fetch()), 201);
+        }
+        if ($method === 'DELETE') {
+            require_fields($body, ['id']);
+            $stmt = db()->prepare('DELETE FROM coupons WHERE id=?'); $stmt->execute([(int)$body['id']]);
+            json_response(['ok' => true]);
         }
     }
 

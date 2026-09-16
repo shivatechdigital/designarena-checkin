@@ -214,6 +214,11 @@
         return saved ? JSON.parse(saved) : INITIAL_REVIEWS;
       });
 
+      const [coupons, setCoupons] = useState(() => {
+        const saved = localStorage.getItem('cih_coupons');
+        return saved ? JSON.parse(saved) : [];
+      });
+
       // Hotel Profile Settings
       const [hotelConfig, setHotelConfig] = useState(() => {
         const saved = localStorage.getItem('cih_config');
@@ -239,6 +244,7 @@
       useEffect(() => { localStorage.setItem('cih_bookings', JSON.stringify(bookings)); }, [bookings]);
       useEffect(() => { localStorage.setItem('cih_queries', JSON.stringify(queries)); }, [queries]);
       useEffect(() => { localStorage.setItem('cih_reviews_official_v1', JSON.stringify(reviews)); }, [reviews]);
+      useEffect(() => { localStorage.setItem('cih_coupons', JSON.stringify(coupons)); }, [coupons]);
       useEffect(() => { localStorage.setItem('cih_config', JSON.stringify(hotelConfig)); }, [hotelConfig]);
 
       useEffect(() => {
@@ -251,6 +257,7 @@
             if (data.rooms) setRooms(data.rooms);
             if (data.roomTypes) setRoomTypes(data.roomTypes);
             if (data.reviews) setReviews(data.reviews);
+            if (data.coupons) setCoupons(data.coupons);
             if (data.hotelConfig) setHotelConfig((current) => ({ ...current, ...data.hotelConfig }));
             if (data.bookings) setBookings(data.bookings);
             if (data.queries) setQueries(data.queries);
@@ -431,6 +438,8 @@
                 setQueries={setQueries}
                 reviews={reviews}
                 setReviews={setReviews}
+                coupons={coupons}
+                setCoupons={setCoupons}
                 hotelConfig={hotelConfig}
                 setHotelConfig={setHotelConfig}
                 showToast={showToast}
@@ -457,6 +466,7 @@
               rooms={rooms}
               selectedRoom={selectedRoomForBooking || rooms[0]}
               initialDates={quickBookForm}
+              coupons={coupons}
               onClose={() => setBookingModalOpen(false)}
               onConfirmBooking={async (newBooking) => {
                 try {
@@ -1846,6 +1856,7 @@
       bookings, setBookings, 
       queries, setQueries, 
       reviews, setReviews,
+      coupons, setCoupons,
       hotelConfig, setHotelConfig,
       showToast 
     }) {
@@ -1860,6 +1871,7 @@
       const [adminLoginError, setAdminLoginError] = useState('');
       const [adminLoginForm, setAdminLoginForm] = useState({ email: '', password: '', remember: true });
       const [apiConnectionStatus, setApiConnectionStatus] = useState('idle');
+      const [couponDraft, setCouponDraft] = useState({ code: '', discountPercent: 10, minimumAmount: 0, active: true });
 
       // Room Editor Modal state
       const [editingRoom, setEditingRoom] = useState(null);
@@ -1907,6 +1919,7 @@
         { id: 'roomTypes', icon: '◇', label: 'Room Types', count: roomTypes.length },
         { id: 'queries', icon: '◌', label: 'Guest Queries', count: newQueries },
         { id: 'feedback', icon: '★', label: 'Reviews', count: reviews.length },
+        { id: 'coupons', icon: '%', label: 'Coupons', count: coupons.length },
         { id: 'settings', icon: '⚙', label: 'Property Settings' },
         { id: 'mysql', icon: '⌘', label: 'Database Setup' }
       ];
@@ -2164,6 +2177,24 @@
             setHotelConfig((current) => ({ ...current, ...savedSettings }));
           }
           showToast('Property settings saved and published.');
+        } catch (error) { showToast(error.message, 'error'); }
+      };
+
+      const addCoupon = async (event) => {
+        event.preventDefault();
+        try {
+          const coupon = API_ENABLED ? await apiRequest('coupons', { method: 'POST', body: couponDraft }) : { ...couponDraft, id: Date.now(), code: couponDraft.code.toUpperCase() };
+          setCoupons([coupon, ...coupons]);
+          setCouponDraft({ code: '', discountPercent: 10, minimumAmount: 0, active: true });
+          showToast('Coupon added and published.');
+        } catch (error) { showToast(error.message, 'error'); }
+      };
+
+      const deleteCoupon = async (couponId) => {
+        try {
+          if (API_ENABLED) await apiRequest('coupons', { method: 'DELETE', body: { id: couponId } });
+          setCoupons(coupons.filter((coupon) => coupon.id !== couponId));
+          showToast('Coupon deleted.');
         } catch (error) { showToast(error.message, 'error'); }
       };
 
@@ -2759,6 +2790,19 @@
               </div>
             )}
 
+            {adminTab === 'coupons' && (
+              <div className="bg-white rounded-xl p-5 sm:p-8 border border-slate-200 shadow-sm">
+                <div className="mb-7"><h3 className="text-xl font-extrabold text-forest-950">Booking Coupons</h3><p className="text-xs text-slate-500 mt-1">Shown only for eligible Pay Online bookings.</p></div>
+                <form onSubmit={addCoupon} className="grid grid-cols-1 sm:grid-cols-4 gap-3 p-4 bg-slate-50 border border-slate-100 rounded-lg mb-6">
+                  <input value={couponDraft.code} onChange={(event) => setCouponDraft({ ...couponDraft, code: event.target.value.toUpperCase() })} placeholder="Code e.g. STAY10" className="px-3 py-2.5 border border-slate-200 rounded-lg text-sm" required />
+                  <input type="number" min="1" max="100" value={couponDraft.discountPercent} onChange={(event) => setCouponDraft({ ...couponDraft, discountPercent: Number(event.target.value) })} placeholder="Discount %" className="px-3 py-2.5 border border-slate-200 rounded-lg text-sm" required />
+                  <input type="number" min="0" value={couponDraft.minimumAmount} onChange={(event) => setCouponDraft({ ...couponDraft, minimumAmount: Number(event.target.value) })} placeholder="Minimum amount" className="px-3 py-2.5 border border-slate-200 rounded-lg text-sm" required />
+                  <button type="submit" className="bg-forest-900 text-white px-4 py-2.5 rounded-lg text-sm font-bold">Add Coupon</button>
+                </form>
+                <div className="space-y-2">{coupons.length === 0 ? <p className="text-sm text-slate-400 py-5">No coupons added yet.</p> : coupons.map((coupon) => <div key={coupon.id} className="flex items-center justify-between gap-3 p-4 border border-slate-200 rounded-lg"><span className="font-bold text-forest-950">{coupon.code}</span><span className="text-xs text-slate-500">{coupon.discountPercent}% off on Rs {Number(coupon.minimumAmount).toLocaleString('en-IN')}+</span><button onClick={() => deleteCoupon(coupon.id)} className="text-xs font-bold text-red-600">Delete</button></div>)}</div>
+              </div>
+            )}
+
             {/* TAB: PROPERTY SETTINGS */}
             {adminTab === 'settings' && (
               <div className="bg-white rounded-xl p-5 sm:p-8 border border-slate-200 shadow-sm">
@@ -2787,6 +2831,9 @@
                     <span className="block text-xs font-bold uppercase tracking-wide text-slate-500 mb-2">Property Address</span>
                     <textarea rows="3" value={hotelConfig.location || ''} onChange={(event) => setHotelConfig({ ...hotelConfig, location: event.target.value })} className="w-full px-4 py-3 rounded-lg border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600"></textarea>
                   </label>
+                  <label className="block md:col-span-2"><span className="block text-xs font-bold uppercase tracking-wide text-slate-500 mb-2">Email Confirmation Subject</span><input value={hotelConfig.emailConfirmationSubject || 'Booking confirmed: {{bookingId}} | {{propertyName}}'} onChange={(event) => setHotelConfig({ ...hotelConfig, emailConfirmationSubject: event.target.value })} className="w-full px-4 py-3 rounded-lg border border-slate-200 bg-slate-50 text-sm" /></label>
+                  <label className="block md:col-span-2"><span className="block text-xs font-bold uppercase tracking-wide text-slate-500 mb-2">Email Confirmation Template</span><textarea rows="5" value={hotelConfig.emailConfirmationTemplate || 'Dear {{guestName}}, your {{roomName}} stay is confirmed for {{checkIn}} to {{checkOut}}. Booking ID: {{bookingId}}. Total: Rs {{totalAmount}}.'} onChange={(event) => setHotelConfig({ ...hotelConfig, emailConfirmationTemplate: event.target.value })} className="w-full px-4 py-3 rounded-lg border border-slate-200 bg-slate-50 text-sm" /></label>
+                  <label className="block md:col-span-2"><span className="block text-xs font-bold uppercase tracking-wide text-slate-500 mb-2">WhatsApp Confirmation Template</span><textarea rows="4" value={hotelConfig.whatsappConfirmationTemplate || 'Hello {{guestName}}, your booking {{bookingId}} at {{propertyName}} is confirmed. {{roomName}}, {{checkIn}} to {{checkOut}}. Total: Rs {{totalAmount}}.'} onChange={(event) => setHotelConfig({ ...hotelConfig, whatsappConfirmationTemplate: event.target.value })} className="w-full px-4 py-3 rounded-lg border border-slate-200 bg-slate-50 text-sm" /></label>
                 </div>
 
                 <div className="mt-7 pt-6 border-t border-slate-100 flex items-center gap-4">
@@ -2997,12 +3044,16 @@
     }
 
     // --- INTERACTIVE BOOKING ENGINE MODAL ---
-    function BookingEngineModal({ rooms, selectedRoom, initialDates, onClose, onConfirmBooking }) {
+    function BookingEngineModal({ rooms, selectedRoom, initialDates, coupons, onClose, onConfirmBooking }) {
       const [currentRoom, setCurrentRoom] = useState(selectedRoom || rooms[0]);
       const [formData, setFormData] = useState({
         guestName: '',
         email: '',
         phone: '',
+        whatsapp: '',
+        whatsappSameAsPhone: true,
+        paymentMode: 'Cash on Check-in',
+        couponCode: '',
         checkIn: initialDates.checkIn || new Date().toISOString().split('T')[0],
         checkOut: initialDates.checkOut || new Date(Date.now() + 86400000 * 2).toISOString().split('T')[0],
         guests: initialDates.guests || 2,
@@ -3020,24 +3071,29 @@
       }, [formData.checkIn, formData.checkOut]);
 
       // Calculate Total with Addons
-      const totalAmount = useMemo(() => {
+      const subtotal = useMemo(() => {
         let base = currentRoom.price * nights;
         if (formData.addRafting) base += 850 * formData.guests;
         if (formData.addScooty) base += 500 * nights;
         return base;
       }, [currentRoom, nights, formData.addRafting, formData.addScooty, formData.guests]);
 
+      const eligibleCoupons = coupons.filter((coupon) => coupon.active && subtotal >= Number(coupon.minimumAmount || 0));
+      const appliedCoupon = eligibleCoupons.find((coupon) => coupon.code.toUpperCase() === formData.couponCode.trim().toUpperCase());
+      const discountAmount = appliedCoupon ? Math.round(subtotal * Number(appliedCoupon.discountPercent) / 100) : 0;
+      const totalAmount = subtotal - discountAmount;
+
       const handleSubmit = (e) => {
         e.preventDefault();
-        if (!formData.guestName || !formData.phone) {
-          alert('Please provide your name and phone number for booking confirmation.');
+        if (!formData.guestName || !formData.email || !formData.phone || !formData.whatsapp) {
+          alert('Please provide your name, email, contact number, and WhatsApp number.');
           return;
         }
 
         const newBooking = {
           id: 'CIH-' + Math.floor(1000 + Math.random() * 9000),
           guestName: formData.guestName,
-          email: formData.email || 'guest@tapovan.com',
+          email: formData.email,
           phone: formData.phone,
           roomName: currentRoom.name,
           checkIn: formData.checkIn,
@@ -3045,8 +3101,8 @@
           guests: formData.guests,
           totalAmount: totalAmount,
           status: 'Confirmed',
-          paymentMode: 'Direct Host Reservation',
-          notes: `${formData.specialRequests || ''} ${formData.addRafting ? '[+Rafting]' : ''} ${formData.addScooty ? '[+Scooty]' : ''}`.trim()
+          paymentMode: formData.paymentMode,
+          notes: `${formData.specialRequests || ''} [WhatsApp: ${formData.whatsapp}] ${appliedCoupon ? `[Coupon: ${appliedCoupon.code}, -Rs ${discountAmount}]` : ''} ${formData.addRafting ? '[+Rafting]' : ''} ${formData.addScooty ? '[+Scooty]' : ''}`.trim()
         };
 
         onConfirmBooking(newBooking);
@@ -3148,16 +3204,38 @@
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold uppercase text-stone-500 mb-1">Phone / WhatsApp *</label>
-                  <input 
-                    type="tel"
-                    placeholder="e.g. +91 98765 00000"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                  <label className="block text-xs font-bold uppercase text-stone-500 mb-1">Email Address *</label>
+                  <input
+                    type="email"
+                    placeholder="e.g. maya@example.com"
+                    value={formData.email}
+                    onChange={(e) => setFormData({...formData, email: e.target.value})}
                     className="w-full px-4 py-2.5 rounded-xl border border-stone-200 text-sm font-medium bg-stone-50/50 focus:outline-none focus:ring-2 focus:ring-forest-800"
                     required
                   />
                 </div>
+                <div>
+                  <label className="block text-xs font-bold uppercase text-stone-500 mb-1">Contact Number *</label>
+                  <input 
+                    type="tel"
+                    placeholder="e.g. +91 98765 00000"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({...formData, phone: e.target.value, whatsapp: formData.whatsappSameAsPhone ? e.target.value : formData.whatsapp})}
+                    className="w-full px-4 py-2.5 rounded-xl border border-stone-200 text-sm font-medium bg-stone-50/50 focus:outline-none focus:ring-2 focus:ring-forest-800"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold uppercase text-stone-500 mb-1">WhatsApp Number *</label>
+                  <input type="tel" placeholder="e.g. +91 98765 00000" value={formData.whatsapp} onChange={(e) => setFormData({...formData, whatsapp: e.target.value})} className="w-full px-4 py-2.5 rounded-xl border border-stone-200 text-sm font-medium bg-stone-50/50 focus:outline-none focus:ring-2 focus:ring-forest-800" required />
+                  <label className="mt-2 flex items-center gap-2 text-xs text-stone-600"><input type="checkbox" checked={formData.whatsappSameAsPhone} onChange={(e) => { const same = e.target.checked; setFormData({...formData, whatsappSameAsPhone: same, whatsapp: same ? formData.phone : formData.whatsapp}); }} /> Same as contact number</label>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-stone-200 p-4 space-y-3">
+                <span className="block text-xs font-bold uppercase text-stone-500">Payment Option</span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2"><label className={`p-3 rounded-xl border cursor-pointer text-sm font-bold ${formData.paymentMode === 'Cash on Check-in' ? 'border-forest-900 bg-forest-50' : 'border-stone-200'}`}><input type="radio" name="payment" checked={formData.paymentMode === 'Cash on Check-in'} onChange={() => setFormData({...formData, paymentMode: 'Cash on Check-in', couponCode: ''})} className="mr-2" />Cash on Check-in</label><label className={`p-3 rounded-xl border cursor-pointer text-sm font-bold ${formData.paymentMode === 'Pay Online' ? 'border-forest-900 bg-forest-50' : 'border-stone-200'}`}><input type="radio" name="payment" checked={formData.paymentMode === 'Pay Online'} onChange={() => setFormData({...formData, paymentMode: 'Pay Online'})} className="mr-2" />Pay Online</label></div>
+                {formData.paymentMode === 'Pay Online' && <div><label className="block text-xs font-bold uppercase text-stone-500 mb-1">Coupon Code</label><input list="booking-coupons" value={formData.couponCode} onChange={(e) => setFormData({...formData, couponCode: e.target.value.toUpperCase()})} placeholder={eligibleCoupons.length ? 'Enter or select a coupon' : 'No coupon currently eligible'} className="w-full px-4 py-2.5 rounded-xl border border-stone-200 text-sm" /><datalist id="booking-coupons">{eligibleCoupons.map((coupon) => <option key={coupon.id} value={coupon.code}>{coupon.discountPercent}% off</option>)}</datalist>{appliedCoupon && <p className="mt-2 text-xs font-bold text-emerald-700">{appliedCoupon.code} applied: Rs {discountAmount.toLocaleString('en-IN')} saved</p>}</div>}
               </div>
 
               {/* Optional Experiences */}
@@ -3201,7 +3279,7 @@
                   <div className="font-serif text-2xl font-bold text-amber-300 mt-0.5">
                     Total: ₹{totalAmount.toLocaleString('en-IN')}
                   </div>
-                  <p className="text-[10px] text-emerald-400">✓ Pay on arrival in Upper Tapovan</p>
+                  <p className="text-[10px] text-emerald-400">{formData.paymentMode === 'Pay Online' ? 'Online payment setup will continue after confirmation.' : 'Pay on arrival in Upper Tapovan.'}</p>
                 </div>
 
                 <button

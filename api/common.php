@@ -133,6 +133,31 @@ function booking_from_row(array $row): array
     ];
 }
 
+function coupon_from_row(array $row): array
+{
+    return [
+        'id' => (int)$row['id'], 'code' => $row['code'],
+        'discountPercent' => (int)$row['discount_percent'],
+        'minimumAmount' => (int)$row['minimum_amount'], 'active' => (bool)$row['active'],
+    ];
+}
+
+function send_booking_confirmation(array $booking): bool
+{
+    $settings = settings_data();
+    $propertyName = $settings['name'] ?? 'Checkinn Homes';
+    $subject = str_replace(['{{propertyName}}', '{{bookingId}}'], [$propertyName, $booking['id']], $settings['emailConfirmationSubject'] ?? 'Booking confirmed: {{bookingId}} | {{propertyName}}');
+    $template = $settings['emailConfirmationTemplate'] ?? '<h1>Your stay is confirmed</h1><p>Dear {{guestName}},</p><p>We look forward to welcoming you to {{propertyName}}.</p><p><strong>{{roomName}}</strong><br>{{checkIn}} to {{checkOut}}<br>Booking ID: {{bookingId}}<br>Total: Rs {{totalAmount}}</p>';
+    $html = str_replace(
+        ['{{propertyName}}', '{{guestName}}', '{{roomName}}', '{{checkIn}}', '{{checkOut}}', '{{bookingId}}', '{{totalAmount}}'],
+        [$propertyName, $booking['guestName'], $booking['roomName'], $booking['checkIn'], $booking['checkOut'], $booking['id'], number_format((int)$booking['totalAmount'])],
+        $template
+    );
+    $body = '<!doctype html><html><body style="margin:0;background:#f4f7f5;font-family:Arial,sans-serif;color:#102a22"><div style="max-width:620px;margin:24px auto;background:#fff;border:1px solid #dfe8e2"><div style="padding:28px;background:#0c3b2e;color:#fff"><strong style="font-size:22px">' . htmlspecialchars($propertyName, ENT_QUOTES, 'UTF-8') . '</strong></div><div style="padding:28px;line-height:1.65">' . $html . '</div></div></body></html>';
+    $headers = ['MIME-Version: 1.0', 'Content-type: text/html; charset=UTF-8', 'From: ' . $propertyName . ' <' . ($settings['email'] ?? 'no-reply@localhost') . '>'];
+    return mail($booking['email'], $subject, $body, implode("\r\n", $headers));
+}
+
 function query_from_row(array $row): array
 {
     return [

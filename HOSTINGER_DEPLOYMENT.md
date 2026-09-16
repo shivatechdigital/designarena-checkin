@@ -52,6 +52,19 @@ A successful response contains:
 
 Then delete `api/install.php` from Hostinger File Manager.
 
+## Update an already-installed demo
+
+After uploading the latest files, create the new coupons table in phpMyAdmin by importing `database/schema.sql`. The `CREATE TABLE IF NOT EXISTS` statements preserve existing rooms, bookings, settings, and other data.
+
+To add the starter coupons without re-running the full installer, run this SQL in phpMyAdmin:
+
+```sql
+INSERT IGNORE INTO coupons (code, discount_percent, minimum_amount, active)
+VALUES ('WELCOME10', 10, 3000, 1), ('STAY15', 15, 8000, 1);
+```
+
+The current release saves the guest's payment choice and applies eligible coupons. For real online payment, connect a payment gateway such as Razorpay before advertising payment collection. Email confirmations use PHP `mail()` and require Hostinger mail to be configured. WhatsApp confirmations require an approved WhatsApp Business API provider (for example Meta Cloud API, Interakt, or WATI); the editable WhatsApp template is stored in Property Settings for that provider integration.
+
 The installer creates and seeds:
 
 - `admins`

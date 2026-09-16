@@ -72,6 +72,10 @@ try {
         $settingStmt->execute([$key, $value]);
     }
 
+    $couponStmt = db()->prepare('INSERT IGNORE INTO coupons (code, discount_percent, minimum_amount, active) VALUES (?, ?, ?, 1)');
+    $couponStmt->execute(['WELCOME10', 10, 3000]);
+    $couponStmt->execute(['STAY15', 15, 8000]);
+
     json_response([
         'ok' => true,
         'message' => 'Database installed successfully. Delete api/install.php after confirming the site works.',
