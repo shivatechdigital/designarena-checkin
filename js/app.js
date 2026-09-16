@@ -13,127 +13,118 @@
       window.location.href = PAGE_PATHS[page] || PAGE_PATHS.home;
     };
 
+    const ADMIN_LOGIN_BACKGROUND = 'https://checkinnhomes.com/wp-content/uploads/2026/03/JKS01199-scaled.jpg';
+    const ADMIN_CREDENTIALS = {
+      email: 'admin@checkinnhomes.com',
+      password: 'LocalDemo@2026'
+    };
+
+    const API_ENABLED = window.location.protocol === 'http:' || window.location.protocol === 'https:';
+    const API_ENDPOINT = 'api/index.php';
+    let apiCsrfToken = '';
+
+    async function apiRequest(resource, options = {}) {
+      if (!API_ENABLED) return null;
+      const method = options.method || 'GET';
+      const headers = { ...(options.headers || {}) };
+      if (apiCsrfToken && !['GET', 'HEAD'].includes(method)) headers['X-CSRF-Token'] = apiCsrfToken;
+      if (options.body !== undefined && !(options.body instanceof FormData)) headers['Content-Type'] = 'application/json';
+      const response = await fetch(`${API_ENDPOINT}?resource=${encodeURIComponent(resource)}`, {
+        method,
+        credentials: 'same-origin',
+        headers,
+        body: options.body === undefined ? undefined : options.body instanceof FormData ? options.body : JSON.stringify(options.body)
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || `Request failed (${response.status})`);
+      if (data.csrfToken) apiCsrfToken = data.csrfToken;
+      return data;
+    }
+
+    async function apiUploadImages(files) {
+      const formData = new FormData();
+      files.forEach((file) => formData.append('images[]', file));
+      const response = await fetch('api/upload.php', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: apiCsrfToken ? { 'X-CSRF-Token': apiCsrfToken } : {},
+        body: formData
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || 'Image upload failed.');
+      return data.urls || [];
+    }
+
     // --- DEFAULT INITIAL DATA (Synced via localStorage) ---
     const INITIAL_ROOMS = [
       {
-        id: 'room-1',
-        name: 'Premium Room',
-        type: 'Private Mountain View',
-        price: 2499,
-        originalPrice: 3200,
-        capacity: '2 Adults + 1 Child',
-        bed: 'King Size Bed',
-        size: '320 sq.ft',
-        rating: 4.9,
-        reviewsCount: 42,
-        image: 'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=900&q=80',
+        id: 'room-1', name: 'Premium Room', type: 'Premium Stay', price: 5286, originalPrice: 7049,
+        capacity: '2 Guests', bed: 'Double Bed', size: 'Premium Room', rating: 5, reviewsCount: 5,
+        image: 'https://checkinnhomes.com/wp-content/uploads/2026/03/premium.jpeg',
         gallery: [
-          'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=900&q=80',
-          'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=900&q=80',
-          'https://images.unsplash.com/photo-1566665797739-1674de7a421a?auto=format&fit=crop&w=900&q=80'
+          'https://checkinnhomes.com/wp-content/uploads/2026/03/premium.jpeg',
+          'https://checkinnhomes.com/wp-content/uploads/2026/03/JKS01206-scaled.jpg',
+          'https://checkinnhomes.com/wp-content/uploads/2026/03/JKS01304-scaled.jpg'
         ],
-        amenities: ['Mountain View Balcony', 'Fast 100Mbps Wi-Fi', 'Air Conditioning & Heater', 'Smart LED TV with Netflix', 'Attached Luxury Bathroom', 'Electric Kettle & Tea Kit', '24/7 Hot Geyser Water'],
-        description: 'Our top-tier peaceful sanctuary with a private balcony offering breathtaking morning vistas of Tapovan hills and the whispering Ganges breeze. Perfect for couples, spiritual seekers, and remote executives.'
+        amenities: ['TV', 'Private Bathroom', 'Towels', 'Water', 'AC', 'Fan'],
+        mealPlans: ['Room Only (EP): ₹5,286', 'With Breakfast (CP): ₹5,699', 'With Meals (MAP): ₹6,374'],
+        description: 'Comfortable premium accommodation for two guests with modern essentials and a private bathroom.'
       },
       {
-        id: 'room-2',
-        name: 'Super Deluxe Room',
-        type: 'Private Balcony Haven',
-        price: 1999,
-        originalPrice: 2600,
-        capacity: '2 Guests',
-        bed: 'Queen Bed',
-        size: '280 sq.ft',
-        rating: 4.8,
-        reviewsCount: 38,
-        image: 'https://images.unsplash.com/photo-1618773928121-c32242e63f39?auto=format&fit=crop&w=900&q=80',
+        id: 'room-2', name: 'Super Deluxe Room', type: 'Enhanced Comfort', price: 3486, originalPrice: 4649,
+        capacity: '2 Guests', bed: 'Double Bed', size: 'Super Deluxe Room', rating: 5, reviewsCount: 5,
+        image: 'https://checkinnhomes.com/wp-content/uploads/2026/03/Super-Deluxe-room.jpeg',
         gallery: [
-          'https://images.unsplash.com/photo-1618773928121-c32242e63f39?auto=format&fit=crop&w=900&q=80',
-          'https://images.unsplash.com/photo-1591088398332-8a7791972843?auto=format&fit=crop&w=900&q=80'
+          'https://checkinnhomes.com/wp-content/uploads/2026/03/Super-Deluxe-room.jpeg',
+          'https://checkinnhomes.com/wp-content/uploads/2026/03/JKS01298-scaled.jpg',
+          'https://checkinnhomes.com/wp-content/uploads/2026/03/JKS01286-scaled.jpg'
         ],
-        amenities: ['Private Balcony', 'High-Speed Wi-Fi', 'Air Conditioning', 'Ensuite Bathroom', 'Work Desk & Chair', 'Daily Housekeeping', '24/7 Hot Water'],
-        description: 'Spacious and tastefully furnished with minimalist Himalayan decor. Comes with a dedicated study desk for digital nomads and a serene balcony to unwind after yoga.'
+        amenities: ['TV', 'Private Bathroom', 'Towels & Toiletries', 'Water', 'Toilet Paper', 'Fan'],
+        mealPlans: ['Room Only (EP): ₹3,486', 'With Breakfast (CP): ₹3,899', 'With Meals (MAP): ₹4,574'],
+        description: 'Spacious elegance with enhanced comfort for a relaxing and premium stay.'
       },
       {
-        id: 'room-3',
-        name: 'Deluxe Room',
-        type: 'Cozy Rest Stay',
-        price: 1499,
-        originalPrice: 2000,
-        capacity: '2 Guests',
-        bed: 'Double Bed',
-        size: '220 sq.ft',
-        rating: 4.7,
-        reviewsCount: 29,
-        image: 'https://images.unsplash.com/photo-1595576508898-0ad5c879a061?auto=format&fit=crop&w=900&q=80',
+        id: 'room-3', name: 'Deluxe Room', type: 'Modern Comfort', price: 3899, originalPrice: 5199,
+        capacity: '2 Guests', bed: 'Double Bed', size: 'Deluxe Room', rating: 5, reviewsCount: 5,
+        image: 'https://checkinnhomes.com/wp-content/uploads/2026/04/super-rooms12.png',
         gallery: [
-          'https://images.unsplash.com/photo-1595576508898-0ad5c879a061?auto=format&fit=crop&w=900&q=80',
-          'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=900&q=80'
+          'https://checkinnhomes.com/wp-content/uploads/2026/04/super-rooms12.png',
+          'https://checkinnhomes.com/wp-content/uploads/2026/03/JKS01284-scaled.jpg',
+          'https://checkinnhomes.com/wp-content/uploads/2026/03/JKS01275-scaled.jpg'
         ],
-        amenities: ['Quiet Mountain Air', 'High-Speed Wi-Fi', 'Ceiling Fan & Air Cooler', 'Attached Clean Bathroom', 'Wardrobe', '24/7 Hot Water'],
-        description: 'Cozy and super quiet, tailored for light travelers, solo travelers, and spiritual pilgrims wanting pure comfort at an incredible value.'
+        amenities: ['TV', 'Private Bathroom', 'Towels', 'Water', 'Trash Can', 'Fan', 'AC'],
+        mealPlans: ['Room Only (EP): ₹3,899', 'With Breakfast (CP): ₹4,161', 'With Meals (MAP): ₹4,649'],
+        description: 'Luxury living with modern amenities for a refined and indulgent experience.'
       },
       {
-        id: 'room-4',
-        name: 'Shared Dormitory',
-        type: 'Backpacker & Yogi Bunk',
-        price: 599,
-        originalPrice: 899,
-        capacity: '1 Bunk Bed',
-        bed: 'Single Orthopedic Bunk',
-        size: 'Spacious 6-Bed Dorm',
-        rating: 4.85,
-        reviewsCount: 56,
-        image: 'https://images.unsplash.com/photo-1555854877-bab0e564b8d5?auto=format&fit=crop&w=900&q=80',
+        id: 'room-4', name: 'Shared Dormitory Room', type: 'Social Group Stay', price: 3486, originalPrice: null,
+        capacity: 'Up to 6 Guests', bed: 'Shared Sleeping Space', size: 'Shared Dormitory', rating: 5, reviewsCount: 5,
+        image: 'https://checkinnhomes.com/wp-content/uploads/2026/04/Shared-Dormitory-Room-12.jpeg',
         gallery: [
-          'https://images.unsplash.com/photo-1555854877-bab0e564b8d5?auto=format&fit=crop&w=900&q=80',
-          'https://images.unsplash.com/photo-1520277739336-7bf67edfa768?auto=format&fit=crop&w=900&q=80'
+          'https://checkinnhomes.com/wp-content/uploads/2026/04/Shared-Dormitory-Room-12.jpeg',
+          'https://checkinnhomes.com/wp-content/uploads/2026/03/JKS01244-scaled.jpg',
+          'https://checkinnhomes.com/wp-content/uploads/2026/03/JKS01240-scaled.jpg'
         ],
-        amenities: ['Personal Locker', 'Individual Bed Reading Light', 'Universal Power Socket', 'High-Speed Wi-Fi', 'Common Lounge & Cafe Access', 'Filtered RO Water'],
-        description: 'Vibrant, ultra-clean social community bunk space. Meet fellow travelers from across the world, exchange yoga routines, and plan your waterfall treks.'
+        amenities: ['Shared Sleeping Space', 'Basic Essentials', 'Fan'],
+        mealPlans: ['Room Only (EP): ₹3,486'],
+        description: 'An affordable and social stay option, perfect for groups and solo travelers.'
       }
     ];
 
+    const INITIAL_ROOM_TYPES = Array.from(new Set(INITIAL_ROOMS.map((room) => room.type)));
+
     const INITIAL_REVIEWS = [
-      {
-        id: 'rev-1',
-        name: 'Aarav Sharma',
-        city: 'Bengaluru, India',
-        rating: 5,
-        room: 'Premium Room',
-        date: '2 days ago',
-        comment: 'Checkinn Homes is truly a peaceful gem in Tapovan! Located right near Secret Waterfall road, away from the loud horns. The Wi-Fi was rock solid for my work calls and the mountain view morning tea is unforgettable.',
-        avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80',
-        approved: true
-      },
-      {
-        id: 'rev-2',
-        name: 'Elena Rostova',
-        city: 'St. Petersburg, Russia',
-        rating: 5,
-        room: 'Shared Dormitory',
-        date: '1 week ago',
-        comment: 'Stayed 2 weeks for my 200hr Yoga Teacher Training. The bunk beds are very comfortable, lockers are safe, and the host helped arrange river rafting and bike rentals at local prices!',
-        avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80',
-        approved: true
-      },
-      {
-        id: 'rev-3',
-        name: 'Rohan & Kritika Mehta',
-        city: 'Delhi NCR',
-        rating: 5,
-        room: 'Super Deluxe Room',
-        date: '2 weeks ago',
-        comment: 'Cleanest rooms in Upper Tapovan at this budget. Kundan restaurant and amazing cafes are just a 3-minute stroll away. The host hospitality made us feel like family.',
-        avatar: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&w=150&q=80',
-        approved: true
-      }
+      { id: 'rev-1', name: 'Gautam Ahuja', city: 'Google Review', rating: 5, room: 'Check In Homes', date: 'Verified guest', comment: 'We had an awesome stay. Rooms were very clean, staff were very helpful, and the food was awesome.', avatar: '', approved: true },
+      { id: 'rev-2', name: 'Pratik Singh', city: 'Google Review', rating: 5, room: 'Check In Homes', date: 'Verified guest', comment: 'Had a great stay experience.', avatar: '', approved: true },
+      { id: 'rev-3', name: 'New Indian Surgical', city: 'Google Review', rating: 5, room: 'Check In Homes', date: 'Verified guest', comment: 'A great place to stay in. A little inside the lane but totally worth it. The staff was nice, the manager was super professional, rooms were clean, food was homely, and they catered to everything you could ask for.', avatar: '', approved: true },
+      { id: 'rev-4', name: 'Kishan Dwivedi', city: 'Google Review', rating: 5, room: 'Check In Homes', date: 'Verified guest', comment: 'Service was good, food was great, rooms were clean, and the staff was humble. Overall, a good stay.', avatar: '', approved: true },
+      { id: 'rev-5', name: 'Srikar Namburi', city: 'Google Review', rating: 5, room: 'Check In Homes', date: 'Verified guest', comment: 'Mr Sharma ji, the manager, and the staff were really welcoming and sweet. A great place to stay.', avatar: '', approved: true }
     ];
 
     const INITIAL_BOOKINGS = [
       {
         id: 'CIH-7821',
-        guestName: 'Vikram Malhotra',
+        guestName: 'Shreya Gore',
         email: 'vikram.m@gmail.com',
         phone: '+91 98765 43210',
         roomName: 'Premium Room',
@@ -193,13 +184,24 @@
 
       // Core Dynamic Data with LocalStorage Persistence
       const [rooms, setRooms] = useState(() => {
-        const saved = localStorage.getItem('cih_rooms');
+        const saved = localStorage.getItem('cih_rooms_official_v1');
         return saved ? JSON.parse(saved) : INITIAL_ROOMS;
+      });
+
+      const [roomTypes, setRoomTypes] = useState(() => {
+        const saved = localStorage.getItem('cih_room_types');
+        const savedTypes = saved ? JSON.parse(saved) : INITIAL_ROOM_TYPES;
+        return Array.from(new Set([...savedTypes, ...rooms.map((room) => room.type).filter(Boolean)]));
       });
 
       const [bookings, setBookings] = useState(() => {
         const saved = localStorage.getItem('cih_bookings');
-        return saved ? JSON.parse(saved) : INITIAL_BOOKINGS;
+        const bookingData = saved ? JSON.parse(saved) : INITIAL_BOOKINGS;
+        return bookingData.map((booking) => (
+          booking.id === 'CIH-7821' && booking.guestName === 'Vikram Malhotra'
+            ? { ...booking, guestName: 'Shreya Gore' }
+            : booking
+        ));
       });
 
       const [queries, setQueries] = useState(() => {
@@ -208,7 +210,7 @@
       });
 
       const [reviews, setReviews] = useState(() => {
-        const saved = localStorage.getItem('cih_reviews');
+        const saved = localStorage.getItem('cih_reviews_official_v1');
         return saved ? JSON.parse(saved) : INITIAL_REVIEWS;
       });
 
@@ -232,11 +234,79 @@
       });
 
       // Sync state to localstorage
-      useEffect(() => { localStorage.setItem('cih_rooms', JSON.stringify(rooms)); }, [rooms]);
+      useEffect(() => { localStorage.setItem('cih_rooms_official_v1', JSON.stringify(rooms)); }, [rooms]);
+      useEffect(() => { localStorage.setItem('cih_room_types', JSON.stringify(roomTypes)); }, [roomTypes]);
       useEffect(() => { localStorage.setItem('cih_bookings', JSON.stringify(bookings)); }, [bookings]);
       useEffect(() => { localStorage.setItem('cih_queries', JSON.stringify(queries)); }, [queries]);
-      useEffect(() => { localStorage.setItem('cih_reviews', JSON.stringify(reviews)); }, [reviews]);
+      useEffect(() => { localStorage.setItem('cih_reviews_official_v1', JSON.stringify(reviews)); }, [reviews]);
       useEffect(() => { localStorage.setItem('cih_config', JSON.stringify(hotelConfig)); }, [hotelConfig]);
+
+      useEffect(() => {
+        if (!API_ENABLED) return undefined;
+        let active = true;
+        const loadApiData = async () => {
+          try {
+            const data = await apiRequest('bootstrap');
+            if (!active || !data) return;
+            if (data.rooms) setRooms(data.rooms);
+            if (data.roomTypes) setRoomTypes(data.roomTypes);
+            if (data.reviews) setReviews(data.reviews);
+            if (data.hotelConfig) setHotelConfig((current) => ({ ...current, ...data.hotelConfig }));
+            if (data.bookings) setBookings(data.bookings);
+            if (data.queries) setQueries(data.queries);
+          } catch (error) {
+            console.error('API bootstrap failed; cached data remains available.', error);
+          }
+        };
+        loadApiData();
+        const timer = currentPage === 'admin' ? window.setInterval(loadApiData, 5000) : null;
+        return () => {
+          active = false;
+          if (timer) window.clearInterval(timer);
+        };
+      }, [currentPage]);
+
+      useEffect(() => {
+        if (API_ENABLED) return undefined;
+        const syncAdminData = (event) => {
+          if (!event.newValue) return;
+          try {
+            if (event.key === 'cih_bookings') setBookings(JSON.parse(event.newValue));
+            if (event.key === 'cih_queries') setQueries(JSON.parse(event.newValue));
+            if (event.key === 'cih_reviews_official_v1') setReviews(JSON.parse(event.newValue));
+            if (event.key === 'cih_rooms_official_v1') setRooms(JSON.parse(event.newValue));
+            if (event.key === 'cih_room_types') setRoomTypes(JSON.parse(event.newValue));
+            if (event.key === 'cih_config') setHotelConfig(JSON.parse(event.newValue));
+          } catch (error) {
+            console.error('Could not synchronize admin data.', error);
+          }
+        };
+
+        const syncPersistedValue = (key, setter) => {
+          const saved = localStorage.getItem(key);
+          if (!saved) return;
+          setter((currentValue) => JSON.stringify(currentValue) === saved ? currentValue : JSON.parse(saved));
+        };
+
+        window.addEventListener('storage', syncAdminData);
+        const pollingTimer = currentPage === 'admin' ? window.setInterval(() => {
+          try {
+            syncPersistedValue('cih_bookings', setBookings);
+            syncPersistedValue('cih_queries', setQueries);
+            syncPersistedValue('cih_reviews_official_v1', setReviews);
+            syncPersistedValue('cih_rooms_official_v1', setRooms);
+            syncPersistedValue('cih_room_types', setRoomTypes);
+            syncPersistedValue('cih_config', setHotelConfig);
+          } catch (error) {
+            console.error('Could not refresh admin data.', error);
+          }
+        }, 1000) : null;
+
+        return () => {
+          window.removeEventListener('storage', syncAdminData);
+          if (pollingTimer) window.clearInterval(pollingTimer);
+        };
+      }, [currentPage]);
 
       // Booking Engine Modal State
       const [bookingModalOpen, setBookingModalOpen] = useState(false);
@@ -284,14 +354,16 @@
           )}
 
           {/* Navigation Bar */}
-          <Navbar 
-            currentPage={currentPage} 
-            setCurrentPage={setCurrentPage} 
-            mobileMenuOpen={mobileMenuOpen}
-            setMobileMenuOpen={setMobileMenuOpen}
-            hotelConfig={hotelConfig}
-            openBookingEngine={openBookingEngine}
-          />
+          {currentPage !== 'admin' && (
+            <Navbar 
+              currentPage={currentPage} 
+              setCurrentPage={setCurrentPage} 
+              mobileMenuOpen={mobileMenuOpen}
+              setMobileMenuOpen={setMobileMenuOpen}
+              hotelConfig={hotelConfig}
+              openBookingEngine={openBookingEngine}
+            />
+          )}
 
           {/* Page Routing */}
           <main className="flex-grow">
@@ -321,9 +393,14 @@
             {currentPage === 'contact' && (
               <ContactPage 
                 hotelConfig={hotelConfig}
-                onAddQuery={(newQuery) => {
-                  setQueries([newQuery, ...queries]);
-                  showToast('Thank you! Your query is recorded. Our team will contact you shortly.');
+                onAddQuery={async (newQuery) => {
+                  try {
+                    const savedQuery = API_ENABLED ? await apiRequest('queries', { method: 'POST', body: newQuery }) : newQuery;
+                    setQueries([savedQuery || newQuery, ...queries]);
+                    showToast('Thank you! Your query is recorded. Our team will contact you shortly.');
+                  } catch (error) {
+                    showToast(error.message, 'error');
+                  }
                 }}
               />
             )}
@@ -331,9 +408,14 @@
               <FeedbackPage 
                 reviews={reviews}
                 rooms={rooms}
-                onAddReview={(newReview) => {
-                  setReviews([newReview, ...reviews]);
-                  showToast('Thank you for your review! It has been posted successfully.');
+                onAddReview={async (newReview) => {
+                  try {
+                    const savedReview = API_ENABLED ? await apiRequest('reviews', { method: 'POST', body: newReview }) : newReview;
+                    setReviews([savedReview || newReview, ...reviews]);
+                    showToast('Thank you for your review! It has been posted successfully.');
+                  } catch (error) {
+                    showToast(error.message, 'error');
+                  }
                 }}
               />
             )}
@@ -341,6 +423,8 @@
               <AdminPanel 
                 rooms={rooms}
                 setRooms={setRooms}
+                roomTypes={roomTypes}
+                setRoomTypes={setRoomTypes}
                 bookings={bookings}
                 setBookings={setBookings}
                 queries={queries}
@@ -374,27 +458,30 @@
               selectedRoom={selectedRoomForBooking || rooms[0]}
               initialDates={quickBookForm}
               onClose={() => setBookingModalOpen(false)}
-              onConfirmBooking={(newBooking) => {
-                setBookings([newBooking, ...bookings]);
-                setBookingModalOpen(false);
-                if (window.confetti) {
-                  window.confetti({
-                    particleCount: 120,
-                    spread: 80,
-                    origin: { y: 0.6 }
-                  });
+              onConfirmBooking={async (newBooking) => {
+                try {
+                  const savedBooking = API_ENABLED ? await apiRequest('bookings', { method: 'POST', body: newBooking }) : newBooking;
+                  setBookings([savedBooking || newBooking, ...bookings]);
+                  setBookingModalOpen(false);
+                  if (window.confetti) {
+                    window.confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
+                  }
+                  showToast(`Booking ${newBooking.id} confirmed! Welcome to Rishikesh.`);
+                } catch (error) {
+                  showToast(error.message, 'error');
                 }
-                showToast(`Booking ${newBooking.id} confirmed! Welcome to Rishikesh.`);
               }}
             />
           )}
 
           {/* Footer */}
-          <Footer 
-            hotelConfig={hotelConfig} 
-            setCurrentPage={setCurrentPage}
-            openBookingEngine={openBookingEngine}
-          />
+          {currentPage !== 'admin' && (
+            <Footer 
+              hotelConfig={hotelConfig} 
+              setCurrentPage={setCurrentPage}
+              openBookingEngine={openBookingEngine}
+            />
+          )}
         </div>
       );
     }
@@ -574,8 +661,8 @@
           <div className="relative min-h-[90vh] flex items-center justify-center bg-stone-900 overflow-hidden">
             {/* Background Image with Parallax Vibe */}
             <img 
-              src="https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=1920&q=85" 
-              alt="Rishikesh Mountains and Ganga Valley"
+              src="https://checkinnhomes.com/wp-content/uploads/2026/03/checkinhome2-1-1024x768.webp" 
+              alt="Check In Homes property in Rishikesh"
               className="absolute inset-0 w-full h-full object-cover object-center scale-105 transform filter brightness-90 animate-pulse duration-1000"
               style={{ animationDuration: '8s' }}
             />
@@ -586,16 +673,16 @@
               
               {/* Badge */}
               <div className="inline-flex items-center gap-2 bg-white/15 backdrop-blur-md border border-white/25 px-4 py-1.5 rounded-full text-xs sm:text-sm font-semibold tracking-wide text-amber-300 mb-6 shadow-lg">
-                <span>✨</span> Serenity in Upper Tapovan, Rishikesh
+                <span>✨</span> Comfort, Luxury & Affordability - All in One Place
               </div>
 
               {/* Main Headline */}
               <h1 className="font-serif text-4xl sm:text-6xl md:text-7xl font-bold tracking-tight text-white mb-6 leading-[1.15] drop-shadow-md">
-                Your Trusted Stay Partner in <span className="italic text-amber-400 font-serif">Rishikesh</span>
+                Find Your Perfect Stay with <span className="italic text-amber-400 font-serif">Check In Homes</span>
               </h1>
 
               <p className="max-w-2xl mx-auto text-base sm:text-lg md:text-xl text-stone-200 font-normal mb-10 leading-relaxed drop-shadow">
-                {hotelConfig.tagline} — offering comfortable rooms, modern amenities, and a peaceful experience just steps away from Secret Waterfall & the sacred Ganges.
+                Discover handpicked hotels and homestays across top destinations. Whether you're traveling for business or leisure, enjoy clean rooms, seamless booking, and the best prices guaranteed.
               </p>
 
               {/* Interactive Booking Search Bar (Float Bar) */}
@@ -664,51 +751,31 @@
             </div>
           </div>
 
-          {/* FEATURED HIGHLIGHTS / WHY CHOOSE US */}
+          {/* ABOUT CHECK IN HOMES */}
           <section className="py-20 bg-white">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="text-center max-w-3xl mx-auto mb-16">
-                <p className="text-amber-600 font-bold text-xs uppercase tracking-widest mb-2">A Haven in Upper Tapovan</p>
-                <h2 className="font-serif text-3xl sm:text-4xl font-bold text-forest-950">
-                  Crafted for Calm, Culture & Himalayan Adventures
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+              <div>
+                <span className="text-amber-600 font-bold text-sm uppercase tracking-widest">About Check In Homes</span>
+                <h2 className="font-sans text-3xl sm:text-4xl font-extrabold text-forest-950 mt-4 mb-6 leading-tight">
+                  Experience hospitality that feels like home, wherever you go.
                 </h2>
-                <p className="mt-4 text-stone-600 text-sm sm:text-base leading-relaxed">
-                  Whether you are visiting Rishikesh for intense yoga immersion, river rafting thrill, or remote work amid the green Himalayas, Checkinn Homes delivers uncompromised hospitality.
+                <p className="text-stone-600 text-sm sm:text-base leading-relaxed mb-8">
+                  At Check In Homes, we bring you a carefully curated selection of hotels and homestays designed for comfort, convenience, and affordability. Whether you're traveling for business or leisure, our mission is to make every stay seamless and stress-free. With verified properties, easy booking, and dedicated customer support, we ensure you always find the perfect place to check in and relax.
                 </p>
+                <ul className="space-y-3 text-stone-700 font-semibold mb-8">
+                  {['Customer-First Approach', 'Easy & Secure Booking Experience', 'Affordable Pricing with No Hidden Charges', 'Handpicked & Verified Properties'].map((item) => (
+                    <li key={item} className="flex items-center gap-3"><span className="text-amber-600 text-xl">✓</span>{item}</li>
+                  ))}
+                </ul>
+                <button onClick={() => setCurrentPage('about')} className="bg-amber-500 hover:bg-amber-600 text-forest-950 font-bold px-7 py-3 transition">
+                  Know More
+                </button>
               </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                {[
-                  {
-                    icon: '🏔️',
-                    title: 'Peaceful Tapovan Location',
-                    desc: 'Tucked away on Secret Waterfall Road, far from vehicular noise yet minutes away from popular organic cafes and Laxman Jhula vibrancy.'
-                  },
-                  {
-                    icon: '📶',
-                    title: 'Digital Nomad Ready',
-                    desc: 'Dedicated 100 Mbps optical high-speed Wi-Fi, comfortable workstations, and power backup ensuring your meetings never stutter.'
-                  },
-                  {
-                    icon: '🧘‍♂️',
-                    title: 'Yoga & Trekking Desk',
-                    desc: 'Complimentary assistance for local Rishikesh sightseeing, river rafting, bungee jumping, sunrise treks, and yoga ashram recommendations.'
-                  },
-                  {
-                    icon: '🚿',
-                    title: 'Pure Comfort Amenities',
-                    desc: '24/7 hot geyser water, daily sanitization, plush fresh linen, electric kettles, and attentive host care round the clock.'
-                  }
-                ].map((feature, idx) => (
-                  <div key={idx} className="bg-warmCream/60 p-8 rounded-3xl border border-stone-200/80 hover:shadow-xl transition-all group hover:-translate-y-1">
-                    <div className="text-4xl mb-4 bg-white w-16 h-16 rounded-2xl flex items-center justify-center shadow-sm group-hover:scale-110 transition">
-                      {feature.icon}
-                    </div>
-                    <h3 className="text-lg font-bold text-forest-950 mb-2 font-serif">{feature.title}</h3>
-                    <p className="text-stone-600 text-sm leading-relaxed">{feature.desc}</p>
-                  </div>
-                ))}
-              </div>
+              <img
+                src="https://checkinnhomes.com/wp-content/uploads/2026/03/checkinhome2-1-2048x1536.webp"
+                alt="Check In Homes rooms and common areas"
+                className="w-full aspect-[4/3] object-cover border-[10px] border-forest-950"
+              />
             </div>
           </section>
 
@@ -743,59 +810,67 @@
             </div>
           </section>
 
-          {/* RISHIKESH EXPERIENCE PHOTO BANNER */}
-          <section className="py-20 bg-forest-950 text-white relative overflow-hidden">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-                <div>
-                  <span className="text-amber-400 font-bold text-xs uppercase tracking-widest">Discover Tapovan Vibes</span>
-                  <h2 className="font-serif text-3xl sm:text-5xl font-bold leading-tight mt-3 mb-6">
-                    Wake Up to the Melodies of Waterfall & Sacred Chants
-                  </h2>
-                  <p className="text-stone-300 text-sm sm:text-base leading-relaxed mb-8">
-                    Upper Tapovan is the crown of Rishikesh for those who appreciate tranquility. From Checkinn Homes, walk 10 minutes along our serene road to discover the hidden Secret Waterfall, indulge in wood-fired pizza at nearby Bohemian cafes, or stroll down to the riverbanks for sacred evening Ganga Aarti.
-                  </p>
-
-                  <div className="space-y-4">
-                    {[
-                      { icon: '🌊', title: 'Secret Waterfall Trail', desc: 'Direct walking path starting right outside our lane.' },
-                      { icon: '🍲', title: 'Culinary Delights', desc: 'Famous Kundan Restaurant & health cafes within 200 meters.' },
-                      { icon: '🛶', title: 'Adventure Concierge', desc: 'Shivpuri Rafting, Beatles Ashram tour & Scooty rentals at host rates.' }
-                    ].map((item, i) => (
-                      <div key={i} className="flex items-start gap-4 p-4 rounded-2xl bg-white/5 border border-white/10">
-                        <span className="text-2xl">{item.icon}</span>
-                        <div>
-                          <h4 className="font-bold text-amber-300 text-sm">{item.title}</h4>
-                          <p className="text-xs text-stone-300 mt-0.5">{item.desc}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <img 
-                    src="https://images.unsplash.com/photo-1518002171953-a080ee817e1f?auto=format&fit=crop&w=600&q=80" 
-                    alt="Rishikesh Ganga River"
-                    className="rounded-3xl object-cover h-64 w-full shadow-lg hover:scale-[1.02] transition"
-                  />
-                  <img 
-                    src="https://images.unsplash.com/photo-1545205597-3d9d02c29597?auto=format&fit=crop&w=600&q=80" 
-                    alt="Yoga in Rishikesh"
-                    className="rounded-3xl object-cover h-64 w-full shadow-lg hover:scale-[1.02] transition mt-8"
-                  />
-                  <img 
-                    src="https://images.unsplash.com/photo-1598928506311-c55ded91a20c?auto=format&fit=crop&w=600&q=80" 
-                    alt="Cosy Room in Tapovan"
-                    className="rounded-3xl object-cover h-64 w-full shadow-lg hover:scale-[1.02] transition -mt-8"
-                  />
-                  <img 
-                    src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=80" 
-                    alt="Himalayan Sunset"
-                    className="rounded-3xl object-cover h-64 w-full shadow-lg hover:scale-[1.02] transition"
-                  />
+          {/* COMPLETE STAY EXPERIENCE */}
+          <section className="bg-white border-y border-stone-200 py-12 lg:py-16">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-2 items-stretch">
+              <div
+                className="relative h-[460px] sm:h-[560px] lg:h-[680px] overflow-hidden bg-cover bg-center"
+                style={{ backgroundImage: 'url(https://checkinnhomes.com/wp-content/uploads/2026/03/JKS01286-scaled.jpg)' }}
+              >
+                <img
+                  src="https://checkinnhomes.com/wp-content/uploads/2026/03/pic-4.webp"
+                  alt="Travel suitcase"
+                  className="absolute bottom-0 right-2 sm:right-6 w-[38%] max-h-[25%] object-contain object-bottom"
+                />
+              </div>
+              <div className="px-2 sm:px-8 lg:px-10 py-10 lg:py-8 flex flex-col justify-center">
+                <span className="text-amber-600 font-bold text-sm uppercase tracking-wider">Experience Comfort, Convenience & Care</span>
+                <h2 className="font-sans text-3xl sm:text-4xl font-extrabold text-forest-950 mt-4 mb-6 leading-tight">
+                  <span className="bg-amber-500 text-forest-950 px-1">Everything you need</span> for a relaxing and memorable stay in Rishikesh
+                </h2>
+                <p className="text-stone-600 text-sm sm:text-base leading-relaxed mb-7">
+                  At Check In Homes, we go beyond just providing rooms - we create a complete stay experience. From modern amenities to personalized service, every detail is designed to make your visit comfortable, stress-free, and truly enjoyable. Whether you're here for adventure, relaxation, or work, we ensure you feel right at home.
+                </p>
+                <ul className="space-y-3 text-sm sm:text-base text-stone-600 mb-7">
+                  {[
+                    'Stay close to popular attractions, cafes, and the peaceful surroundings of Rishikesh.',
+                    'Enjoy hygienic rooms with high standards of cleanliness and comfort.',
+                    'High-speed Wi-Fi, power backup, parking, and everything you need for a seamless stay.',
+                    'Our team is always ready to assist you for a smooth and hassle-free experience.'
+                  ].map((item) => <li key={item} className="flex items-start gap-3"><span className="text-amber-600 font-bold">✓</span><span>{item}</span></li>)}
+                </ul>
+                <div className="grid grid-cols-1 sm:grid-cols-2 max-w-lg">
+                  <button onClick={() => setCurrentPage('rooms')} className="bg-amber-500 hover:bg-amber-600 text-forest-950 font-bold py-3 px-4 sm:border-r border-amber-300">Find Your Stay Now</button>
+                  <button onClick={() => setCurrentPage('contact')} className="bg-amber-500 hover:bg-amber-600 text-forest-950 font-bold py-3 px-4 border-t sm:border-t-0 border-amber-300">Contact Us</button>
                 </div>
               </div>
+            </div>
+          </section>
+
+          {/* WHY CHOOSE US */}
+          <section className="py-20 bg-warmCream">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+              <div>
+                <span className="inline-block bg-amber-500 text-forest-950 font-bold px-3 py-1">Why Choose Us</span>
+                <h2 className="font-serif text-3xl sm:text-5xl font-bold text-forest-950 mt-7 mb-6 leading-tight">Why Guests Love Staying at Check In Homes</h2>
+                <p className="text-stone-600 text-sm sm:text-base leading-relaxed mb-10">
+                  From spotless rooms and warm service to a peaceful Tapovan location, every part of your stay is thoughtfully managed for comfort and convenience.
+                </p>
+                <div className="grid grid-cols-2 gap-x-8 gap-y-8">
+                  {[
+                    { value: '50k+', label: 'Happy Guests' },
+                    { value: '4.8★', label: 'Guest Rating' },
+                    { value: '50+', label: 'Bookings Daily' },
+                    { value: '24/7', label: 'Support' }
+                  ].map((stat) => (
+                    <div key={stat.label}>
+                      <strong className="font-serif text-3xl sm:text-4xl text-forest-950 block">{stat.value}</strong>
+                      <span className="text-stone-500 text-sm">{stat.label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <img src="https://checkinnhomes.com/wp-content/uploads/2026/03/JKS01209-2-1024x683.jpg" alt="Guests relaxing in a Check In Homes room" className="w-full aspect-[4/3] object-cover" />
             </div>
           </section>
 
@@ -804,8 +879,8 @@
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="text-center max-w-2xl mx-auto mb-16">
                 <span className="text-amber-600 font-bold text-xs uppercase tracking-widest">Real Guest Stories</span>
-                <h2 className="font-serif text-3xl sm:text-4xl font-bold text-forest-950 mt-1">Loved by Travelers & Yogis</h2>
-                <p className="text-stone-600 text-sm mt-3">Read what global backpackers, families, and solo adventurers say about their stay at Checkinn Homes.</p>
+                <h2 className="font-serif text-3xl sm:text-4xl font-bold text-forest-950 mt-1">What Our Guests Say</h2>
+                <p className="text-stone-600 text-sm mt-3">Real experiences from travelers who stayed with us.</p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -824,11 +899,13 @@
                     </div>
 
                     <div className="flex items-center gap-3 pt-4 border-t border-stone-200">
-                      <img 
-                        src={review.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80'} 
-                        alt={review.name}
-                        className="w-11 h-11 rounded-full object-cover border border-stone-300"
-                      />
+                      {review.avatar ? (
+                        <img src={review.avatar} alt={review.name} className="w-11 h-11 rounded-full object-cover border border-stone-300" />
+                      ) : (
+                        <div className="w-11 h-11 rounded-full bg-forest-900 text-amber-300 flex items-center justify-center font-bold border border-forest-800">
+                          {review.name.charAt(0)}
+                        </div>
+                      )}
                       <div>
                         <h4 className="font-bold text-sm text-forest-950">{review.name}</h4>
                         <p className="text-xs text-stone-500">{review.city} • <span className="text-forest-800 font-medium">{review.room}</span></p>
@@ -849,27 +926,15 @@
             </div>
           </section>
 
-          {/* CTA STRIP */}
-          <section className="bg-amber-500 py-12 text-forest-950">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-6 text-center md:text-left">
-              <div>
-                <h3 className="font-serif text-2xl sm:text-3xl font-bold">Planning a journey to Rishikesh?</h3>
-                <p className="font-medium text-sm mt-1 opacity-90">Best price guaranteed when you book directly with Checkinn Homes.</p>
-              </div>
-              <div className="flex flex-wrap gap-4">
-                <a 
-                  href={`tel:${hotelConfig.phone}`}
-                  className="bg-forest-950 text-white font-bold px-6 py-3 rounded-full text-sm shadow hover:bg-forest-900 transition"
-                >
-                  Call +91 82793 09665
-                </a>
-                <button 
-                  onClick={() => openBookingEngine()}
-                  className="bg-white text-forest-950 font-bold px-6 py-3 rounded-full text-sm shadow hover:bg-stone-100 transition"
-                >
-                  Book Instant Online
-                </button>
-              </div>
+          {/* BOOKING CTA */}
+          <section className="relative min-h-[430px] flex items-center justify-center text-white overflow-hidden">
+            <img src="https://checkinnhomes.com/wp-content/uploads/2026/03/JKS01199-scaled.jpg" alt="Check In Homes reception" className="absolute inset-0 w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-forest-950/70"></div>
+            <div className="relative max-w-5xl mx-auto px-4 py-16 text-center">
+              <span className="text-amber-400 font-bold text-lg">Ready to Book Your Stay in Rishikesh?</span>
+              <h2 className="font-serif text-3xl sm:text-5xl font-bold mt-5 mb-4 leading-tight">Experience comfort, great service, and the perfect location at Check In Homes.</h2>
+              <p className="text-stone-200 text-sm sm:text-base mb-8">Don't wait - secure your room now and enjoy a hassle-free stay with the best amenities and unbeatable prices.</p>
+              <a href={`https://wa.me/${hotelConfig.whatsapp?.replace(/[^0-9]/g, '')}?text=Hello%20Check%20In%20Homes,%20I%20want%20to%20book%20a%20room.`} target="_blank" rel="noreferrer" className="inline-block bg-amber-500 hover:bg-amber-600 text-forest-950 font-bold px-8 py-3 transition">Chat on WhatsApp</a>
             </div>
           </section>
         </div>
@@ -878,6 +943,8 @@
 
     // --- ROOM CARD COMPONENT ---
     function RoomCard({ room, onBook, onViewDetails }) {
+      const [amenitiesExpanded, setAmenitiesExpanded] = useState(false);
+
       return (
         <div className="bg-white rounded-3xl overflow-hidden border border-stone-200/90 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between group">
           <div>
@@ -914,15 +981,21 @@
 
               {/* Key Amenities Pills */}
               <div className="flex flex-wrap gap-1.5 mb-4">
-                {room.amenities.slice(0, 3).map((amenity, idx) => (
+                {room.amenities.slice(0, amenitiesExpanded ? room.amenities.length : 3).map((amenity, idx) => (
                   <span key={idx} className="text-[11px] bg-stone-100 text-stone-700 font-medium px-2.5 py-1 rounded-md">
                     {amenity}
                   </span>
                 ))}
                 {room.amenities.length > 3 && (
-                  <span className="text-[11px] bg-stone-100 text-stone-500 font-medium px-2 py-1 rounded-md">
-                    +{room.amenities.length - 3} more
-                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setAmenitiesExpanded((expanded) => !expanded)}
+                    aria-expanded={amenitiesExpanded}
+                    aria-label={`${amenitiesExpanded ? 'Hide extra' : 'Show all'} amenities for ${room.name}`}
+                    className="text-[11px] bg-amber-50 hover:bg-amber-100 text-amber-700 font-bold px-2.5 py-1 rounded-md border border-amber-200 transition"
+                  >
+                    {amenitiesExpanded ? 'Show less' : `+${room.amenities.length - 3} more`}
+                  </button>
                 )}
               </div>
             </div>
@@ -1074,6 +1147,17 @@
                           ))}
                         </div>
                       </div>
+                      {room.mealPlans && (
+                        <div className="mb-6">
+                          <h4 className="text-xs font-bold uppercase tracking-wider text-stone-500 mb-2">Pricing Plans:</h4>
+                          <div className="flex flex-wrap gap-2">
+                            {room.mealPlans.map((plan) => (
+                              <span key={plan} className="text-xs bg-amber-50 text-amber-800 border border-amber-200 px-3 py-1.5 rounded-lg font-semibold">{plan}</span>
+                            ))}
+                          </div>
+                          <p className="text-[11px] text-stone-500 mt-2">EP = Room Only | CP = Room + Breakfast | MAP = Room + Meals</p>
+                        </div>
+                      )}
                     </div>
 
                     {/* Bottom Actions */}
@@ -1160,8 +1244,8 @@
 
               <div className="relative">
                 <img 
-                  src="https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=800&q=80" 
-                  alt="Rishikesh View"
+                  src="https://checkinnhomes.com/wp-content/uploads/2026/03/checkinhome2-1-1024x768.webp" 
+                  alt="Check In Homes property"
                   className="rounded-3xl shadow-2xl object-cover w-full h-[460px]"
                 />
                 <div className="absolute -bottom-6 -left-6 bg-forest-900 text-amber-300 p-6 rounded-3xl shadow-xl max-w-xs hidden sm:block border border-forest-800">
@@ -1211,8 +1295,8 @@
             {/* Neighborhood */}
             <section className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center mb-20 bg-forest-950 text-white overflow-hidden">
               <img
-                src="https://images.unsplash.com/photo-1518002171953-a080ee817e1f?auto=format&fit=crop&w=1000&q=85"
-                alt="Ganga valley and Himalayan landscape near Tapovan"
+                src="https://checkinnhomes.com/wp-content/uploads/2026/03/New-Picture.png"
+                alt="Check In Homes in Upper Tapovan"
                 className="w-full h-80 lg:h-full min-h-[380px] object-cover"
               />
               <div className="px-7 pb-10 lg:py-12 lg:pr-12 lg:pl-2">
@@ -1227,6 +1311,55 @@
                   <li className="flex gap-2"><span className="text-amber-400">✓</span> Easy access to yoga studios</li>
                   <li className="flex gap-2"><span className="text-amber-400">✓</span> Local transport assistance</li>
                 </ul>
+              </div>
+            </section>
+
+            {/* Property Gallery */}
+            <section className="mb-20">
+              <div className="text-center max-w-3xl mx-auto mb-10">
+                <span className="text-amber-600 font-bold text-xs uppercase tracking-widest">Explore Check In Homes</span>
+                <h2 className="font-serif text-3xl sm:text-4xl font-bold text-forest-950 mt-2 mb-4">
+                  Take a Closer Look at Our Rooms and Amenities
+                </h2>
+                <p className="text-stone-600 text-sm sm:text-base">
+                  From cozy interiors to peaceful surroundings, here's a glimpse of what awaits you at Check In Homes in Rishikesh.
+                </p>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-5">
+                {[
+                  'https://checkinnhomes.com/wp-content/uploads/2026/03/JKS01206-scaled.jpg',
+                  'https://checkinnhomes.com/wp-content/uploads/2026/03/JKS01304-scaled.jpg',
+                  'https://checkinnhomes.com/wp-content/uploads/2026/03/JKS01298-scaled.jpg',
+                  'https://checkinnhomes.com/wp-content/uploads/2026/03/JKS01286-scaled.jpg',
+                  'https://checkinnhomes.com/wp-content/uploads/2026/03/JKS01284-scaled.jpg',
+                  'https://checkinnhomes.com/wp-content/uploads/2026/03/JKS01275-scaled.jpg',
+                  'https://checkinnhomes.com/wp-content/uploads/2026/03/JKS01244-scaled.jpg',
+                  'https://checkinnhomes.com/wp-content/uploads/2026/03/JKS01240-scaled.jpg',
+                  'https://checkinnhomes.com/wp-content/uploads/2026/03/JKS01232-scaled.jpg',
+                  'https://checkinnhomes.com/wp-content/uploads/2026/03/JKS01213-scaled.jpg',
+                  'https://checkinnhomes.com/wp-content/uploads/2026/03/JKS01205-scaled.jpg',
+                  'https://checkinnhomes.com/wp-content/uploads/2026/03/JKS01199-scaled.jpg'
+                ].map((image, index) => (
+                  <img key={image} src={image} alt={`Check In Homes gallery ${index + 1}`} loading="lazy" className="w-full aspect-[4/3] object-cover" />
+                ))}
+              </div>
+            </section>
+
+            {/* Our Values */}
+            <section className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
+              <div className="bg-white p-8 border border-stone-200">
+                <span className="text-amber-600 font-bold text-xs uppercase tracking-widest">Our Story</span>
+                <h3 className="font-serif text-2xl font-bold text-forest-950 mt-2 mb-4">Our Mission</h3>
+                <p className="text-sm text-stone-600 leading-relaxed">
+                  Our mission at Check In Homes is to provide comfortable, clean, and affordable stays that make every guest feel at home. We are committed to delivering seamless service, maintaining high standards of hygiene, and ensuring a stress-free experience for every traveler who stays with us.
+                </p>
+              </div>
+              <div className="bg-forest-900 text-white p-8 border border-forest-800">
+                <span className="text-amber-400 font-bold text-xs uppercase tracking-widest">Our Future</span>
+                <h3 className="font-serif text-2xl font-bold mt-2 mb-4">Our Vision</h3>
+                <p className="text-sm text-stone-300 leading-relaxed">
+                  Our vision is to become a trusted and preferred choice for travelers visiting Rishikesh by consistently offering quality stays, warm hospitality, and memorable experiences. We aim to grow as a brand known for reliability, comfort, and guest satisfaction.
+                </p>
               </div>
             </section>
 
@@ -1318,9 +1451,9 @@
             
             {/* Header */}
             <div className="text-center max-w-3xl mx-auto mb-14">
-              <span className="text-amber-600 font-bold text-xs uppercase tracking-widest">Connect With Us</span>
+              <span className="text-amber-600 font-bold text-xs uppercase tracking-widest">Contact Us</span>
               <h1 className="font-serif text-4xl sm:text-5xl font-bold text-forest-950 mt-2 mb-4">
-                Contact & Location
+                Get in Touch
               </h1>
               <p className="text-stone-600 text-sm sm:text-base leading-relaxed">
                 Need help reaching Upper Tapovan or have queries about group retreats, bike rentals, or river rafting? We are always here.
@@ -1399,6 +1532,10 @@
                     <span className="font-bold">{hotelConfig.checkOutTime}</span>
                   </div>
                   <p className="text-[11px] text-stone-400 mt-2">*Early check-in & late check-out subject to availability upon request.</p>
+                  <div className="mt-4 pt-4 border-t border-forest-800 flex items-center justify-between text-xs sm:text-sm">
+                    <span className="text-stone-300">Business Hours:</span>
+                    <span className="font-bold">24/7 Front Desk Support</span>
+                  </div>
                 </div>
               </div>
 
@@ -1494,7 +1631,7 @@
                   <p className="text-xs text-stone-500">Upper Tapovan, Rishikesh 249192</p>
                 </div>
                 <a 
-                  href="https://maps.google.com/?q=Tapovan+Rishikesh" 
+                  href="https://maps.app.goo.gl/6ojptuSNUgTyHrHD7" 
                   target="_blank" 
                   rel="noreferrer"
                   className="text-xs font-bold text-forest-800 hover:text-amber-600 flex items-center gap-1"
@@ -1667,11 +1804,13 @@
                   <div key={rev.id} className="bg-white rounded-3xl p-6 border border-stone-200 shadow-sm hover:shadow-md transition">
                     <div className="flex items-start justify-between gap-4 mb-3">
                       <div className="flex items-center gap-3">
-                        <img 
-                          src={rev.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&q=80'} 
-                          alt={rev.name}
-                          className="w-12 h-12 rounded-full object-cover border border-stone-300"
-                        />
+                        {rev.avatar ? (
+                          <img src={rev.avatar} alt={rev.name} className="w-12 h-12 rounded-full object-cover border border-stone-300" />
+                        ) : (
+                          <div className="w-12 h-12 rounded-full bg-forest-900 text-amber-300 flex items-center justify-center font-bold border border-forest-800">
+                            {rev.name.charAt(0)}
+                          </div>
+                        )}
                         <div>
                           <h4 className="font-bold text-forest-950 text-sm">{rev.name}</h4>
                           <p className="text-xs text-stone-500">{rev.city} • <span className="text-amber-700 font-semibold">{rev.room}</span></p>
@@ -1703,129 +1842,582 @@
     // --- FULL ADMIN PANEL COMPONENT ---
     function AdminPanel({ 
       rooms, setRooms, 
+      roomTypes, setRoomTypes,
       bookings, setBookings, 
       queries, setQueries, 
       reviews, setReviews,
       hotelConfig, setHotelConfig,
       showToast 
     }) {
-      const [adminTab, setAdminTab] = useState('dashboard'); // 'dashboard', 'bookings', 'rooms', 'queries', 'feedback', 'mysql'
-      const [isAuthenticated, setIsAuthenticated] = useState(true); // default open for demonstration, with passcode option
-      const [passcode, setPasscode] = useState('');
+      const [adminTab, setAdminTab] = useState('dashboard');
+      const [bookingSearch, setBookingSearch] = useState('');
+      const [bookingFilter, setBookingFilter] = useState('All');
+      const [roomTypeDraft, setRoomTypeDraft] = useState('');
+      const [editingRoomType, setEditingRoomType] = useState(null);
+      const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(() => !API_ENABLED && (localStorage.getItem('cih_admin_authenticated') === 'true' || sessionStorage.getItem('cih_admin_authenticated') === 'true'));
+      const [isAdminAuthChecking, setIsAdminAuthChecking] = useState(API_ENABLED);
+      const [showAdminPassword, setShowAdminPassword] = useState(false);
+      const [adminLoginError, setAdminLoginError] = useState('');
+      const [adminLoginForm, setAdminLoginForm] = useState({ email: '', password: '', remember: true });
+      const [apiConnectionStatus, setApiConnectionStatus] = useState('idle');
 
       // Room Editor Modal state
       const [editingRoom, setEditingRoom] = useState(null);
+
+      useEffect(() => {
+        if (!API_ENABLED) return undefined;
+        let active = true;
+        apiRequest('auth')
+          .then((data) => {
+            if (active) setIsAdminAuthenticated(Boolean(data.authenticated));
+          })
+          .catch(() => {
+            if (active) setIsAdminAuthenticated(false);
+          })
+          .finally(() => {
+            if (active) setIsAdminAuthChecking(false);
+          });
+        return () => { active = false; };
+      }, []);
 
       // Revenue Calculation
       const totalRevenue = useMemo(() => {
         return bookings.reduce((sum, b) => sum + (Number(b.totalAmount) || 0), 0);
       }, [bookings]);
 
+      const confirmedBookings = bookings.filter((booking) => booking.status === 'Confirmed').length;
+      const checkedInBookings = bookings.filter((booking) => booking.status === 'Checked-In').length;
+      const newQueries = queries.filter((query) => query.status === 'New').length;
+      const occupancyRate = Math.min(100, Math.round(((confirmedBookings + checkedInBookings) / Math.max(rooms.length, 1)) * 100));
+      const roomPerformance = rooms.map((room) => ({
+        name: room.name,
+        bookings: bookings.filter((booking) => booking.roomName === room.name).length
+      }));
+      const maxRoomBookings = Math.max(1, ...roomPerformance.map((room) => room.bookings));
+      const filteredBookings = bookings.filter((booking) => {
+        const searchValue = bookingSearch.toLowerCase();
+        const matchesSearch = [booking.id, booking.guestName, booking.phone, booking.roomName]
+          .some((value) => String(value || '').toLowerCase().includes(searchValue));
+        return matchesSearch && (bookingFilter === 'All' || booking.status === bookingFilter);
+      });
+      const adminNavItems = [
+        { id: 'dashboard', icon: '◫', label: 'Dashboard' },
+        { id: 'bookings', icon: '▤', label: 'Bookings', count: bookings.length },
+        { id: 'rooms', icon: '▣', label: 'Rooms', count: rooms.length },
+        { id: 'roomTypes', icon: '◇', label: 'Room Types', count: roomTypes.length },
+        { id: 'queries', icon: '◌', label: 'Guest Queries', count: newQueries },
+        { id: 'feedback', icon: '★', label: 'Reviews', count: reviews.length },
+        { id: 'settings', icon: '⚙', label: 'Property Settings' },
+        { id: 'mysql', icon: '⌘', label: 'Database Setup' }
+      ];
+
+      const openAddRoom = () => {
+        setEditingRoom({
+          id: `room-${Date.now()}`,
+          name: '',
+          type: roomTypes[0] || '',
+          price: 0,
+          originalPrice: null,
+          capacity: '2 Guests',
+          bed: 'Double Bed',
+          size: '',
+          rating: 5,
+          reviewsCount: 0,
+          image: '',
+          gallery: [],
+          newGalleryUrl: '',
+          amenities: [],
+          breakfastPrice: '',
+          mealsPrice: '',
+          description: '',
+          isNew: true
+        });
+      };
+
+      const saveRoomType = async (event) => {
+        event.preventDefault();
+        const typeName = roomTypeDraft.trim();
+        if (!typeName) return;
+        const duplicate = roomTypes.some((type) => type.toLowerCase() === typeName.toLowerCase() && type !== editingRoomType);
+        if (duplicate) {
+          showToast('This room type already exists.', 'error');
+          return;
+        }
+
+        try {
+          if (editingRoomType) {
+            if (API_ENABLED) await apiRequest('room-types', { method: 'PUT', body: { oldName: editingRoomType, name: typeName } });
+            setRoomTypes(roomTypes.map((type) => type === editingRoomType ? typeName : type));
+            setRooms(rooms.map((room) => room.type === editingRoomType ? { ...room, type: typeName } : room));
+            showToast(`Room type renamed to "${typeName}".`);
+          } else {
+            if (API_ENABLED) await apiRequest('room-types', { method: 'POST', body: { name: typeName } });
+            setRoomTypes([...roomTypes, typeName]);
+            showToast(`Room type "${typeName}" added.`);
+          }
+        } catch (error) {
+          showToast(error.message, 'error');
+          return;
+        }
+        setRoomTypeDraft('');
+        setEditingRoomType(null);
+      };
+
+      const startEditingRoomType = (type) => {
+        setEditingRoomType(type);
+        setRoomTypeDraft(type);
+      };
+
+      const deleteRoomType = async (type) => {
+        const assignedRooms = rooms.filter((room) => room.type === type).length;
+        if (assignedRooms > 0) {
+          showToast(`Reassign ${assignedRooms} room${assignedRooms === 1 ? '' : 's'} before deleting this type.`, 'error');
+          return;
+        }
+        if (!window.confirm(`Delete room type "${type}"?`)) return;
+        try {
+          if (API_ENABLED) await apiRequest('room-types', { method: 'DELETE', body: { name: type } });
+          setRoomTypes(roomTypes.filter((item) => item !== type));
+          showToast(`Room type "${type}" deleted.`);
+        } catch (error) {
+          showToast(error.message, 'error');
+        }
+      };
+
+      const addRoomImages = (images) => {
+        setEditingRoom((room) => {
+          const gallery = Array.from(new Set([...(room.gallery || []), ...images].filter(Boolean)));
+          return { ...room, image: room.image || gallery[0] || '', gallery, newGalleryUrl: '' };
+        });
+      };
+
+      const addRoomImageUrl = () => {
+        const imageUrl = editingRoom.newGalleryUrl?.trim();
+        if (!imageUrl) return;
+        try {
+          new URL(imageUrl);
+          addRoomImages([imageUrl]);
+        } catch {
+          showToast('Please enter a valid image URL.', 'error');
+        }
+      };
+
+      const compressRoomImage = (file) => new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onerror = reject;
+        reader.onload = () => {
+          const image = new Image();
+          image.onerror = reject;
+          image.onload = () => {
+            const maxWidth = 1200;
+            const maxHeight = 900;
+            const scale = Math.min(1, maxWidth / image.width, maxHeight / image.height);
+            const canvas = document.createElement('canvas');
+            canvas.width = Math.round(image.width * scale);
+            canvas.height = Math.round(image.height * scale);
+            canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height);
+            resolve(canvas.toDataURL('image/jpeg', 0.78));
+          };
+          image.src = reader.result;
+        };
+        reader.readAsDataURL(file);
+      });
+
+      const uploadRoomImages = async (event) => {
+        const files = Array.from(event.target.files || []).filter((file) => file.type.startsWith('image/'));
+        if (!files.length) return;
+        try {
+          const images = API_ENABLED ? await apiUploadImages(files) : await Promise.all(files.map(compressRoomImage));
+          addRoomImages(images);
+          showToast(`${images.length} photo${images.length === 1 ? '' : 's'} added.`);
+        } catch {
+          showToast('One or more photos could not be added.', 'error');
+        }
+        event.target.value = '';
+      };
+
+      const setMainRoomImage = (imageUrl) => {
+        setEditingRoom((room) => ({
+          ...room,
+          image: imageUrl,
+          gallery: [imageUrl, ...(room.gallery || []).filter((image) => image !== imageUrl)]
+        }));
+      };
+
+      const removeRoomImage = (imageUrl) => {
+        setEditingRoom((room) => {
+          const gallery = (room.gallery || []).filter((image) => image !== imageUrl);
+          return { ...room, gallery, image: room.image === imageUrl ? gallery[0] || '' : room.image };
+        });
+      };
+
+      const exportBookings = () => {
+        const rows = [['Booking ID', 'Guest', 'Phone', 'Email', 'Room', 'Check In', 'Check Out', 'Guests', 'Amount', 'Status']];
+        bookings.forEach((booking) => rows.push([
+          booking.id, booking.guestName, booking.phone, booking.email, booking.roomName,
+          booking.checkIn, booking.checkOut, booking.guests, booking.totalAmount, booking.status
+        ]));
+        const csv = rows.map((row) => row.map((value) => `"${String(value ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+        link.download = `checkinn-bookings-${new Date().toISOString().split('T')[0]}.csv`;
+        link.click();
+        URL.revokeObjectURL(link.href);
+        showToast('Booking report exported successfully.');
+      };
+
+      const deleteBooking = async (bookingId) => {
+        if (!window.confirm(`Delete booking ${bookingId}?`)) return;
+        try {
+          if (API_ENABLED) await apiRequest('bookings', { method: 'DELETE', body: { id: bookingId } });
+          setBookings(bookings.filter((booking) => booking.id !== bookingId));
+          showToast(`Booking ${bookingId} deleted.`);
+        } catch (error) { showToast(error.message, 'error'); }
+      };
+
       // Handle Room Edit Save
-      const handleSaveRoom = (e) => {
+      const handleSaveRoom = async (e) => {
         e.preventDefault();
-        setRooms(rooms.map(r => r.id === editingRoom.id ? editingRoom : r));
-        setEditingRoom(null);
-        showToast(`Room "${editingRoom.name}" updated successfully!`);
+        const { isNew, amenitiesText, breakfastPrice, mealsPrice, newGalleryUrl, ...roomData } = editingRoom;
+        if (!roomData.image || !roomData.gallery?.length) {
+          showToast('Please add at least one room photo.', 'error');
+          return;
+        }
+        const roomOnlyPrice = Number(roomData.price) || 0;
+        const gallery = Array.from(new Set([roomData.image, ...roomData.gallery].filter(Boolean)));
+        const normalizedRoom = {
+          ...roomData,
+          price: roomOnlyPrice,
+          originalPrice: roomData.originalPrice ? Number(roomData.originalPrice) : null,
+          amenities: String(amenitiesText ?? roomData.amenities.join(','))
+            .split(',')
+            .map((amenity) => amenity.trim())
+            .filter(Boolean),
+          image: roomData.image,
+          gallery,
+          mealPlans: [
+            `Room Only (EP): ₹${roomOnlyPrice.toLocaleString('en-IN')}`,
+            breakfastPrice ? `With Breakfast (CP): ₹${Number(breakfastPrice).toLocaleString('en-IN')}` : null,
+            mealsPrice ? `With Meals (MAP): ₹${Number(mealsPrice).toLocaleString('en-IN')}` : null
+          ].filter(Boolean)
+        };
+        try {
+          const savedRoom = API_ENABLED ? await apiRequest('rooms', { method: isNew ? 'POST' : 'PUT', body: normalizedRoom }) : normalizedRoom;
+          setRooms(isNew ? [...rooms, savedRoom] : rooms.map((room) => room.id === savedRoom.id ? savedRoom : room));
+          setEditingRoom(null);
+          showToast(`Room "${savedRoom.name}" ${isNew ? 'added' : 'updated'} successfully!`);
+        } catch (error) { showToast(error.message, 'error'); }
+      };
+
+      const deleteRoom = async (room) => {
+        const linkedBookings = bookings.filter((booking) => booking.roomName === room.name).length;
+        const warning = linkedBookings > 0 ? ` This room has ${linkedBookings} existing booking(s); booking records will be kept.` : '';
+        if (!window.confirm(`Delete "${room.name}"?${warning}`)) return;
+        try {
+          if (API_ENABLED) await apiRequest('rooms', { method: 'DELETE', body: { id: room.id } });
+          setRooms(rooms.filter((item) => item.id !== room.id));
+          showToast(`Room "${room.name}" deleted.`);
+        } catch (error) { showToast(error.message, 'error'); }
       };
 
       // Handle Booking Status Change
-      const updateBookingStatus = (bookingId, newStatus) => {
-        setBookings(bookings.map(b => b.id === bookingId ? { ...b, status: newStatus } : b));
-        showToast(`Booking ${bookingId} status updated to ${newStatus}`);
+      const updateBookingStatus = async (bookingId, newStatus) => {
+        try {
+          if (API_ENABLED) await apiRequest('bookings', { method: 'PUT', body: { id: bookingId, status: newStatus } });
+          setBookings(bookings.map(b => b.id === bookingId ? { ...b, status: newStatus } : b));
+          showToast(`Booking ${bookingId} status updated to ${newStatus}`);
+        } catch (error) { showToast(error.message, 'error'); }
       };
 
       // Handle Delete Query
-      const deleteQuery = (queryId) => {
-        setQueries(queries.filter(q => q.id !== queryId));
-        showToast('Query deleted.');
+      const deleteQuery = async (queryId) => {
+        try {
+          if (API_ENABLED) await apiRequest('queries', { method: 'DELETE', body: { id: queryId } });
+          setQueries(queries.filter(q => q.id !== queryId));
+          showToast('Query deleted.');
+        } catch (error) { showToast(error.message, 'error'); }
       };
 
       // Handle Query Status
-      const toggleQueryStatus = (queryId) => {
-        setQueries(queries.map(q => q.id === queryId ? { ...q, status: q.status === 'Resolved' ? 'New' : 'Resolved' } : q));
-        showToast('Query status updated.');
+      const toggleQueryStatus = async (queryId) => {
+        const query = queries.find((item) => item.id === queryId);
+        const status = query?.status === 'Resolved' ? 'New' : 'Resolved';
+        try {
+          if (API_ENABLED) await apiRequest('queries', { method: 'PUT', body: { id: queryId, status } });
+          setQueries(queries.map(q => q.id === queryId ? { ...q, status } : q));
+          showToast('Query status updated.');
+        } catch (error) { showToast(error.message, 'error'); }
       };
 
-      return (
-        <div className="py-8 bg-stone-100 min-h-[85vh]">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            
-            {/* Admin Header */}
-            <div className="bg-forest-950 text-white rounded-3xl p-6 sm:p-8 shadow-xl mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-amber-400 text-xs font-mono font-bold bg-forest-900 px-3 py-1 rounded-full border border-emerald-500/30">
-                    ● HOSTINGER MySQL BACKEND READY
-                  </span>
-                </div>
-                <h1 className="font-serif text-2xl sm:text-3xl font-bold mt-2">
-                  Checkinn Homes Admin Portal
-                </h1>
-                <p className="text-xs text-stone-300 mt-1">
-                  Control live rates, room details, bookings, inquiries & Hostinger database synchronization.
-                </p>
-              </div>
+      const deleteReview = async (reviewId) => {
+        try {
+          if (API_ENABLED) await apiRequest('reviews', { method: 'DELETE', body: { id: reviewId } });
+          setReviews(reviews.filter((review) => review.id !== reviewId));
+          showToast('Review removed.');
+        } catch (error) { showToast(error.message, 'error'); }
+      };
 
-              {/* Admin Tabs Switcher */}
-              <div className="flex flex-wrap gap-1.5 bg-forest-900 p-1.5 rounded-2xl border border-white/10">
-                {[
-                  { id: 'dashboard', label: '📊 Dashboard' },
-                  { id: 'bookings', label: `📑 Bookings (${bookings.length})` },
-                  { id: 'rooms', label: `🛏️ Rooms (${rooms.length})` },
-                  { id: 'queries', label: `💬 Queries (${queries.filter(q => q.status === 'New').length} new)` },
-                  { id: 'feedback', label: `⭐ Reviews (${reviews.length})` },
-                  { id: 'mysql', label: '🗄️ Hostinger DB' },
-                ].map(tab => (
-                  <button
-                    key={tab.id}
-                    onClick={() => setAdminTab(tab.id)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition ${
-                      adminTab === tab.id 
-                        ? 'bg-amber-500 text-forest-950 shadow' 
-                        : 'text-stone-300 hover:text-white hover:bg-forest-800'
-                    }`}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
+      const saveHotelSettings = async () => {
+        try {
+          if (API_ENABLED) {
+            const savedSettings = await apiRequest('settings', { method: 'PUT', body: hotelConfig });
+            setHotelConfig((current) => ({ ...current, ...savedSettings }));
+          }
+          showToast('Property settings saved and published.');
+        } catch (error) { showToast(error.message, 'error'); }
+      };
+
+      const testApiConnection = async () => {
+        if (!API_ENABLED) {
+          setApiConnectionStatus('Upload the project to demo.checkinnhomes.com to test MySQL.');
+          return;
+        }
+        setApiConnectionStatus('Testing connection...');
+        try {
+          const data = await apiRequest('bootstrap');
+          setApiConnectionStatus(`Connected successfully. ${data.rooms?.length || 0} rooms loaded from MySQL.`);
+        } catch (error) {
+          setApiConnectionStatus(`Connection failed: ${error.message}`);
+        }
+      };
+
+      const handleAdminLogin = async (event) => {
+        event.preventDefault();
+        try {
+          if (API_ENABLED) {
+            const result = await apiRequest('auth', { method: 'POST', body: { email: adminLoginForm.email, password: adminLoginForm.password } });
+            apiCsrfToken = result.csrfToken || '';
+            const data = await apiRequest('bootstrap');
+            if (data.rooms) setRooms(data.rooms);
+            if (data.roomTypes) setRoomTypes(data.roomTypes);
+            if (data.reviews) setReviews(data.reviews);
+            if (data.bookings) setBookings(data.bookings);
+            if (data.queries) setQueries(data.queries);
+            if (data.hotelConfig) setHotelConfig((current) => ({ ...current, ...data.hotelConfig }));
+          } else {
+            if (adminLoginForm.email.trim().toLowerCase() !== ADMIN_CREDENTIALS.email || adminLoginForm.password !== ADMIN_CREDENTIALS.password) {
+              throw new Error('Incorrect email or password. Please try again.');
+            }
+            const storage = adminLoginForm.remember ? localStorage : sessionStorage;
+            storage.setItem('cih_admin_authenticated', 'true');
+            sessionStorage.setItem('cih_admin_authenticated', 'true');
+          }
+          setAdminLoginError('');
+          setIsAdminAuthenticated(true);
+        } catch (error) {
+          setAdminLoginError(error.message);
+        }
+      };
+
+      const handleAdminLogout = async () => {
+        if (API_ENABLED) {
+          try { await apiRequest('auth', { method: 'DELETE', body: {} }); } catch (error) { console.error(error); }
+          apiCsrfToken = '';
+        }
+        localStorage.removeItem('cih_admin_authenticated');
+        sessionStorage.removeItem('cih_admin_authenticated');
+        setAdminLoginForm({ email: '', password: '', remember: true });
+        setIsAdminAuthenticated(false);
+      };
+
+      if (isAdminAuthChecking) {
+        return <div className="min-h-screen bg-forest-950 text-white flex items-center justify-center"><div className="text-center"><div className="w-12 h-12 border-4 border-amber-300 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div><p className="text-sm text-slate-300">Checking secure session...</p></div></div>;
+      }
+
+      if (!isAdminAuthenticated) {
+        return (
+          <div className="relative min-h-screen overflow-hidden bg-forest-950 text-white">
+            <img src={ADMIN_LOGIN_BACKGROUND} alt="Luxury hotel reception" className="absolute inset-0 w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-r from-forest-950/95 via-forest-950/55 to-forest-950/25"></div>
+
+            <div className="relative min-h-screen max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 py-10 flex items-center">
+              <div className="w-full grid grid-cols-1 lg:grid-cols-[1fr_460px] gap-12 lg:gap-20 items-end lg:items-center">
+                <section className="hidden lg:flex flex-col justify-end min-h-[620px] pb-8 max-w-xl">
+                  <span className="text-amber-300 text-sm font-bold uppercase tracking-[0.2em]">Hotel Management System</span>
+                  <h1 className="font-serif text-5xl xl:text-6xl leading-[1.05] mt-4 mb-5">Manage Your Hotel <span className="block text-amber-300">Smarter</span></h1>
+                  <p className="text-slate-200 text-base leading-relaxed max-w-lg">Streamline bookings, manage guests, rooms, pricing and revenue from one secure dashboard.</p>
+                  <div className="grid grid-cols-3 gap-5 mt-8 pt-7 border-t border-white/20 text-xs text-slate-200">
+                    <span>▣ Easy Booking Management</span><span>♙ Guest Management</span><span>▥ Room & Revenue Tracking</span>
+                  </div>
+                </section>
+
+                <section className="w-full max-w-md mx-auto lg:mx-0 bg-[#0b223b]/95 border border-slate-400/30 shadow-2xl rounded-lg px-6 sm:px-10 py-9 sm:py-11 backdrop-blur-md">
+                  <div className="text-center mb-8">
+                    <div className="w-16 h-16 mx-auto rounded-lg bg-amber-300 text-forest-950 flex items-center justify-center font-serif text-4xl font-bold mb-4">C</div>
+                    <p className="font-serif text-2xl tracking-[0.15em]">CHECK IN HOMES</p>
+                    <p className="text-[10px] uppercase tracking-[0.35em] text-amber-300 mt-1">Hotel Management System</p>
+                    <h2 className="text-2xl font-bold mt-8">Welcome Back!</h2>
+                    <p className="text-sm text-slate-300 mt-2">Sign in to your account to continue</p>
+                  </div>
+
+                  <form onSubmit={handleAdminLogin} className="space-y-4">
+                    <label className="block">
+                      <span className="sr-only">Admin email</span>
+                      <input type="email" value={adminLoginForm.email} onChange={(event) => setAdminLoginForm({ ...adminLoginForm, email: event.target.value })} placeholder="Username or Email" autoComplete="username" className="w-full px-4 py-3.5 rounded-lg bg-white/5 border border-slate-400/60 text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-300" required />
+                    </label>
+                    <label className="block relative">
+                      <span className="sr-only">Admin password</span>
+                      <input type={showAdminPassword ? 'text' : 'password'} value={adminLoginForm.password} onChange={(event) => setAdminLoginForm({ ...adminLoginForm, password: event.target.value })} placeholder="Password" autoComplete="current-password" className="w-full px-4 py-3.5 pr-14 rounded-lg bg-white/5 border border-slate-400/60 text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-300" required />
+                      <button type="button" onClick={() => setShowAdminPassword((visible) => !visible)} className="absolute right-4 top-3.5 text-sm text-slate-300 hover:text-white" aria-label={showAdminPassword ? 'Hide password' : 'Show password'}>{showAdminPassword ? 'Hide' : 'Show'}</button>
+                    </label>
+
+                    <div className="flex items-center justify-between text-xs text-slate-300">
+                      <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={adminLoginForm.remember} onChange={(event) => setAdminLoginForm({ ...adminLoginForm, remember: event.target.checked })} className="w-4 h-4 accent-amber-400" /> Remember me</label>
+                      <button type="button" onClick={() => setAdminLoginError('Contact the website administrator to reset your password.')} className="text-amber-300 hover:underline">Forgot password?</button>
+                    </div>
+
+                    {adminLoginError && <div role="alert" className="bg-red-500/15 border border-red-400/40 text-red-200 rounded-lg px-4 py-3 text-xs">{adminLoginError}</div>}
+
+                    <button type="submit" className="w-full bg-amber-300 hover:bg-amber-400 text-forest-950 font-extrabold py-3.5 rounded-lg shadow-lg transition">Login</button>
+                  </form>
+
+                  <div className="mt-8 pt-6 border-t border-slate-400/30 text-center text-xs text-slate-400">
+                    Need help? Contact your administrator
+                  </div>
+                  {!API_ENABLED && <p className="mt-3 text-center text-[10px] text-slate-500">Local demo: admin@checkinnhomes.com / LocalDemo@2026</p>}
+                </section>
               </div>
             </div>
+          </div>
+        );
+      }
+
+      return (
+        <div className="min-h-screen bg-[#f5f7fb] text-slate-800">
+          <div className="flex min-h-screen">
+            <aside className="hidden lg:flex w-64 shrink-0 bg-white border-r border-slate-200 px-5 py-7 flex-col sticky top-0 h-screen">
+              <button onClick={() => navigateToPage('home')} className="flex items-center gap-3 px-2 mb-10 text-left">
+                <span className="w-11 h-11 bg-forest-900 text-amber-300 flex items-center justify-center font-serif text-2xl font-bold rounded-lg">C</span>
+                <span>
+                  <strong className="block text-lg text-forest-950">Check In Homes</strong>
+                  <small className="text-slate-400">Admin Portal</small>
+                </span>
+              </button>
+
+              <nav className="space-y-2" aria-label="Admin navigation">
+                {adminNavItems.map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => setAdminTab(item.id)}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold transition ${adminTab === item.id ? 'bg-forest-900 text-white shadow-md' : 'text-slate-500 hover:bg-emerald-50 hover:text-forest-900'}`}
+                  >
+                    <span className={`w-6 text-center text-lg ${adminTab === item.id ? 'text-amber-300' : 'text-emerald-600'}`}>{item.icon}</span>
+                    <span>{item.label}</span>
+                    {item.count !== undefined && <span className={`ml-auto text-[10px] px-2 py-0.5 rounded-full ${adminTab === item.id ? 'bg-white/15' : 'bg-slate-100 text-slate-500'}`}>{item.count}</span>}
+                  </button>
+                ))}
+              </nav>
+
+              <div className="mt-auto border-t border-slate-100 pt-5">
+                <button onClick={() => navigateToPage('home')} className="w-full px-4 py-3 text-left text-sm font-semibold text-slate-500 hover:text-forest-900">← View Website</button>
+                <button onClick={handleAdminLogout} className="w-full px-4 py-3 text-left text-sm font-semibold text-red-500 hover:bg-red-50 rounded-lg">⇥ Logout</button>
+                <div className="flex items-center gap-3 px-4 pt-4">
+                  <span className="w-9 h-9 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center font-bold">A</span>
+                  <span><strong className="block text-sm">Property Admin</strong><small className="text-slate-400">Administrator</small></span>
+                </div>
+              </div>
+            </aside>
+
+            <div className="min-w-0 flex-1">
+              <header className="sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-slate-200 px-4 sm:px-6 lg:px-8 py-4">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-widest text-emerald-700">Check In Homes</p>
+                    <h1 className="text-xl sm:text-2xl font-extrabold text-forest-950">{adminNavItems.find((item) => item.id === adminTab)?.label}</h1>
+                  </div>
+                  <div className="hidden sm:flex items-center gap-5">
+                    <div className="relative">
+                      <span className="absolute left-3 top-2.5 text-slate-400">⌕</span>
+                      <input value={bookingSearch} onChange={(event) => setBookingSearch(event.target.value)} onFocus={() => setAdminTab('bookings')} placeholder="Search bookings..." className="w-64 bg-slate-50 border border-slate-200 rounded-lg py-2 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600" />
+                    </div>
+                    <span className="text-xs text-slate-500">{new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                    <span className="w-10 h-10 rounded-full bg-forest-900 text-amber-300 flex items-center justify-center font-bold">A</span>
+                  </div>
+                </div>
+
+                <nav className="lg:hidden flex gap-2 overflow-x-auto hide-scrollbar mt-4 pb-1" aria-label="Mobile admin navigation">
+                  {adminNavItems.map((item) => (
+                    <button key={item.id} onClick={() => setAdminTab(item.id)} className={`shrink-0 px-3 py-2 rounded-lg text-xs font-bold ${adminTab === item.id ? 'bg-forest-900 text-white' : 'bg-slate-100 text-slate-600'}`}>
+                      {item.icon} {item.label}{item.count !== undefined ? ` (${item.count})` : ''}
+                    </button>
+                  ))}
+                </nav>
+              </header>
+
+              <main className="max-w-[1600px] mx-auto p-4 sm:p-6 lg:p-8">
 
             {/* TAB: DASHBOARD */}
             {adminTab === 'dashboard' && (
-              <div className="space-y-8">
+              <div className="space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+                  <div>
+                    <h2 className="text-2xl font-extrabold text-forest-950">Welcome back, Admin</h2>
+                    <p className="text-sm text-slate-500 mt-1">Here is what is happening at Check In Homes today.</p>
+                  </div>
+                  <button onClick={exportBookings} className="self-start bg-white border border-slate-200 px-4 py-2 rounded-lg text-sm font-bold text-slate-600 hover:border-emerald-600 hover:text-emerald-700">⇩ Export Report</button>
+                </div>
+
                 {/* Metrics Cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                  <div className="bg-white p-6 rounded-3xl border border-stone-200 shadow-sm">
-                    <span className="text-xs font-bold uppercase text-stone-400">Total Bookings</span>
-                    <h3 className="font-serif text-3xl font-bold text-forest-950 mt-1">{bookings.length}</h3>
-                    <p className="text-xs text-emerald-600 font-medium mt-1">↑ 100% Active in Tapovan</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+                  <div className="bg-rose-50 p-5 rounded-lg border border-rose-100">
+                    <span className="w-10 h-10 rounded-full bg-rose-500 text-white flex items-center justify-center text-lg mb-4">▤</span>
+                    <h3 className="text-2xl font-extrabold text-forest-950">{bookings.length}</h3>
+                    <span className="text-sm font-bold text-slate-700">Total Bookings</span>
+                    <p className="text-xs text-rose-500 font-medium mt-2">All website reservations</p>
                   </div>
 
-                  <div className="bg-white p-6 rounded-3xl border border-stone-200 shadow-sm">
-                    <span className="text-xs font-bold uppercase text-stone-400">Gross Booking Value</span>
-                    <h3 className="font-serif text-3xl font-bold text-forest-950 mt-1">₹{totalRevenue.toLocaleString('en-IN')}</h3>
-                    <p className="text-xs text-stone-500 font-medium mt-1">Direct website conversions</p>
+                  <div className="bg-amber-50 p-5 rounded-lg border border-amber-100">
+                    <span className="w-10 h-10 rounded-full bg-amber-500 text-white flex items-center justify-center text-lg mb-4">₹</span>
+                    <h3 className="text-2xl font-extrabold text-forest-950">₹{totalRevenue.toLocaleString('en-IN')}</h3>
+                    <span className="text-sm font-bold text-slate-700">Booking Revenue</span>
+                    <p className="text-xs text-amber-600 font-medium mt-2">Direct booking value</p>
                   </div>
 
-                  <div className="bg-white p-6 rounded-3xl border border-stone-200 shadow-sm">
-                    <span className="text-xs font-bold uppercase text-stone-400">Unanswered Queries</span>
-                    <h3 className="font-serif text-3xl font-bold text-amber-600 mt-1">
-                      {queries.filter(q => q.status === 'New').length}
-                    </h3>
-                    <p className="text-xs text-stone-500 font-medium mt-1">From contact & WhatsApp page</p>
+                  <div className="bg-emerald-50 p-5 rounded-lg border border-emerald-100">
+                    <span className="w-10 h-10 rounded-full bg-emerald-500 text-white flex items-center justify-center text-lg mb-4">✓</span>
+                    <h3 className="text-2xl font-extrabold text-forest-950">{confirmedBookings}</h3>
+                    <span className="text-sm font-bold text-slate-700">Confirmed Stays</span>
+                    <p className="text-xs text-emerald-600 font-medium mt-2">{checkedInBookings} currently checked in</p>
                   </div>
 
-                  <div className="bg-white p-6 rounded-3xl border border-stone-200 shadow-sm">
-                    <span className="text-xs font-bold uppercase text-stone-400">Average Rating</span>
-                    <h3 className="font-serif text-3xl font-bold text-forest-950 mt-1">4.9 ★</h3>
-                    <p className="text-xs text-emerald-600 font-medium mt-1">{reviews.length} Verified guest reviews</p>
+                  <div className="bg-violet-50 p-5 rounded-lg border border-violet-100">
+                    <span className="w-10 h-10 rounded-full bg-violet-500 text-white flex items-center justify-center text-lg mb-4">◉</span>
+                    <h3 className="text-2xl font-extrabold text-forest-950">{occupancyRate}%</h3>
+                    <span className="text-sm font-bold text-slate-700">Occupancy Signal</span>
+                    <p className="text-xs text-violet-600 font-medium mt-2">{newQueries} unanswered guest queries</p>
                   </div>
                 </div>
 
+                <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                  <section className="xl:col-span-2 bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+                    <div className="flex items-center justify-between mb-7">
+                      <div><h3 className="text-lg font-extrabold text-forest-950">Booking Overview</h3><p className="text-xs text-slate-400">Reservations by room type</p></div>
+                      <span className="text-xs bg-emerald-50 text-emerald-700 font-bold px-3 py-1 rounded-full">Live data</span>
+                    </div>
+                    <div className="h-56 flex items-end justify-around gap-4 border-b border-slate-200 px-2">
+                      {roomPerformance.map((room, index) => (
+                        <div key={room.name} className="h-full flex-1 flex flex-col justify-end items-center gap-2 min-w-0">
+                          <span className="text-xs font-bold text-slate-600">{room.bookings}</span>
+                          <div className={`w-full max-w-16 rounded-t-md ${['bg-emerald-500','bg-amber-400','bg-sky-500','bg-violet-500'][index % 4]}`} style={{ height: `${Math.max(10, (room.bookings / maxRoomBookings) * 78)}%` }}></div>
+                          <span className="text-[10px] text-slate-500 text-center h-8 leading-tight">{room.name}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+
+                  <section className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+                    <h3 className="text-lg font-extrabold text-forest-950">Operations</h3>
+                    <p className="text-xs text-slate-400 mb-6">Items needing attention</p>
+                    <div className="space-y-4">
+                      <button onClick={() => setAdminTab('bookings')} className="w-full flex items-center justify-between p-4 bg-rose-50 text-left rounded-lg"><span><strong className="block text-sm text-slate-800">Manage bookings</strong><small className="text-slate-500">Update guest status</small></span><b className="text-rose-600">{bookings.length}</b></button>
+                      <button onClick={() => setAdminTab('queries')} className="w-full flex items-center justify-between p-4 bg-amber-50 text-left rounded-lg"><span><strong className="block text-sm text-slate-800">Guest queries</strong><small className="text-slate-500">Awaiting response</small></span><b className="text-amber-600">{newQueries}</b></button>
+                      <button onClick={() => setAdminTab('rooms')} className="w-full flex items-center justify-between p-4 bg-emerald-50 text-left rounded-lg"><span><strong className="block text-sm text-slate-800">Room inventory</strong><small className="text-slate-500">Rates and availability</small></span><b className="text-emerald-600">{rooms.length}</b></button>
+                    </div>
+                  </section>
+                </div>
+
                 {/* Recent Bookings Quick Table */}
-                <div className="bg-white rounded-3xl p-6 border border-stone-200 shadow-sm">
+                <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
                   <div className="flex justify-between items-center mb-6">
                     <h3 className="font-serif text-xl font-bold text-forest-950">Recent Direct Reservations</h3>
                     <button onClick={() => setAdminTab('bookings')} className="text-xs font-bold text-amber-600 hover:underline">
@@ -1873,20 +2465,35 @@
 
             {/* TAB: BOOKINGS MANAGEMENT */}
             {adminTab === 'bookings' && (
-              <div className="bg-white rounded-3xl p-6 sm:p-8 border border-stone-200 shadow-sm">
+              <div className="bg-white rounded-xl p-5 sm:p-7 border border-slate-200 shadow-sm">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                   <div>
-                    <h3 className="font-serif text-2xl font-bold text-forest-950">Guest Reservations Manager</h3>
-                    <p className="text-xs text-stone-500">Live feed of all website & WhatsApp confirmations</p>
+                    <h3 className="text-xl font-extrabold text-forest-950">Guest Reservations</h3>
+                    <p className="text-xs text-slate-500">Every website booking appears here automatically</p>
                   </div>
-                  <div className="text-xs font-semibold text-stone-500">
-                    Total Bookings: <span className="font-bold text-forest-950">{bookings.length}</span>
+                  <button onClick={exportBookings} className="px-4 py-2 border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:text-emerald-700 hover:border-emerald-500">
+                    ⇩ Export CSV
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 mb-6 p-4 bg-slate-50 border border-slate-100 rounded-lg">
+                  <div className="relative">
+                    <span className="absolute left-3 top-2.5 text-slate-400">⌕</span>
+                    <input value={bookingSearch} onChange={(event) => setBookingSearch(event.target.value)} placeholder="Search guest, booking ID, phone or room" className="w-full bg-white border border-slate-200 rounded-lg py-2 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600" />
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {['All', 'Confirmed', 'Checked-In', 'Completed', 'Cancelled'].map((status) => (
+                      <button key={status} onClick={() => setBookingFilter(status)} className={`px-3 py-2 rounded-lg text-xs font-bold ${bookingFilter === status ? 'bg-forest-900 text-white' : 'bg-white border border-slate-200 text-slate-600'}`}>{status}</button>
+                    ))}
                   </div>
                 </div>
 
+                <p className="text-xs font-semibold text-slate-500 mb-4">Showing {filteredBookings.length} of {bookings.length} bookings</p>
+
                 <div className="space-y-4">
-                  {bookings.map(book => (
-                    <div key={book.id} className="p-5 rounded-2xl bg-stone-50 border border-stone-200 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 hover:border-forest-800 transition">
+                  {filteredBookings.length === 0 && <div className="py-14 text-center text-sm text-slate-400">No bookings match this search or status.</div>}
+                  {filteredBookings.map(book => (
+                    <div key={book.id} className="p-5 rounded-lg bg-white border border-slate-200 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 hover:border-emerald-500 hover:shadow-sm transition">
                       <div className="space-y-1">
                         <div className="flex items-center gap-3">
                           <span className="font-mono font-bold text-sm bg-forest-900 text-amber-300 px-2.5 py-0.5 rounded">
@@ -1932,6 +2539,7 @@
                         >
                           <span>💬</span> WhatsApp Guest
                         </a>
+                        <button onClick={() => deleteBooking(book.id)} className="w-9 h-9 border border-red-200 text-red-500 hover:bg-red-50 rounded-lg" title="Delete booking" aria-label={`Delete booking ${book.id}`}>×</button>
                       </div>
                     </div>
                   ))}
@@ -1941,17 +2549,18 @@
 
             {/* TAB: ROOMS EDITOR */}
             {adminTab === 'rooms' && (
-              <div className="bg-white rounded-3xl p-6 sm:p-8 border border-stone-200 shadow-sm">
-                <div className="flex justify-between items-center mb-6">
+              <div className="bg-white rounded-xl p-5 sm:p-8 border border-slate-200 shadow-sm">
+                <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-7">
                   <div>
-                    <h3 className="font-serif text-2xl font-bold text-forest-950">Room Configuration & Pricing</h3>
-                    <p className="text-xs text-stone-500">Edit nightly rates, descriptions, amenities, and photos live</p>
+                    <h3 className="text-xl font-extrabold text-forest-950">Room Configuration & Pricing</h3>
+                    <p className="text-xs text-slate-500 mt-1">Add, edit or remove rooms shown on the public website</p>
                   </div>
+                  <button onClick={openAddRoom} className="self-start bg-forest-900 hover:bg-forest-800 text-white font-bold px-5 py-3 rounded-lg text-sm shadow-sm">+ Add Room</button>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {rooms.map(room => (
-                    <div key={room.id} className="border border-stone-200 rounded-2xl p-5 bg-stone-50/50 flex flex-col justify-between">
+                    <div key={room.id} className="border border-slate-200 rounded-lg p-5 bg-white flex flex-col justify-between hover:border-emerald-500 hover:shadow-sm transition">
                       <div>
                         <div className="flex gap-4 items-start mb-3">
                           <img src={room.image} alt={room.name} className="w-20 h-20 rounded-xl object-cover" />
@@ -1965,18 +2574,87 @@
                         <div className="text-[11px] text-stone-500 font-medium">
                           Capacity: {room.capacity} | Bed: {room.bed}
                         </div>
+                        <p className="text-[11px] text-sky-700 font-semibold mt-1">▧ {(room.gallery || [room.image]).length} room photo{(room.gallery || [room.image]).length === 1 ? '' : 's'}</p>
+                        <div className="mt-4">
+                          <span className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Amenities</span>
+                          <div className="flex flex-wrap gap-1.5 mt-1.5">
+                            {room.amenities.map((amenity) => <span key={amenity} className="text-[10px] bg-slate-100 text-slate-600 px-2 py-1 rounded">{amenity}</span>)}
+                          </div>
+                        </div>
+                        <div className="mt-4">
+                          <span className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Pricing Plans</span>
+                          <div className="space-y-1 mt-1.5">
+                            {(room.mealPlans || [`Room Only (EP): ₹${room.price.toLocaleString('en-IN')}`]).map((plan) => <p key={plan} className="text-[11px] font-semibold text-amber-700">{plan}</p>)}
+                          </div>
+                        </div>
                       </div>
 
-                      <div className="pt-4 mt-3 border-t border-stone-200 flex justify-end gap-2">
+                      <div className="pt-4 mt-3 border-t border-slate-100 flex justify-end gap-2">
                         <button
-                          onClick={() => setEditingRoom(JSON.parse(JSON.stringify(room)))}
-                          className="px-4 py-2 bg-forest-900 hover:bg-forest-800 text-amber-300 text-xs font-bold rounded-xl shadow transition"
+                          onClick={() => deleteRoom(room)}
+                          className="px-4 py-2 border border-red-200 hover:bg-red-50 text-red-600 text-xs font-bold rounded-lg transition"
                         >
-                          ✏️ Edit Room Details & Price
+                          Delete
+                        </button>
+                        <button
+                          onClick={() => {
+                            const getPlanPrice = (prefix) => {
+                              const plan = room.mealPlans?.find((item) => item.startsWith(prefix));
+                              return plan ? plan.split('₹')[1]?.replace(/,/g, '') || '' : '';
+                            };
+                            setEditingRoom({
+                              ...JSON.parse(JSON.stringify(room)),
+                              amenitiesText: room.amenities.join(', '),
+                              newGalleryUrl: '',
+                              breakfastPrice: getPlanPrice('With Breakfast'),
+                              mealsPrice: getPlanPrice('With Meals')
+                            });
+                          }}
+                          className="px-4 py-2 bg-forest-900 hover:bg-forest-800 text-white text-xs font-bold rounded-lg shadow-sm transition"
+                        >
+                          Edit Room
                         </button>
                       </div>
                     </div>
                   ))}
+                </div>
+              </div>
+            )}
+
+            {/* TAB: ROOM TYPES */}
+            {adminTab === 'roomTypes' && (
+              <div className="bg-white rounded-xl p-5 sm:p-8 border border-slate-200 shadow-sm">
+                <div className="mb-7">
+                  <h3 className="text-xl font-extrabold text-forest-950">Room Types</h3>
+                  <p className="text-xs text-slate-500 mt-1">Manage the room categories available in the Add/Edit Room dropdown.</p>
+                </div>
+
+                <form onSubmit={saveRoomType} className="flex flex-col sm:flex-row gap-3 p-4 bg-slate-50 border border-slate-100 rounded-lg mb-7">
+                  <label className="flex-1">
+                    <span className="sr-only">Room type name</span>
+                    <input value={roomTypeDraft} onChange={(event) => setRoomTypeDraft(event.target.value)} placeholder="e.g. Family Suite" className="w-full px-4 py-3 border border-slate-200 bg-white rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600" required />
+                  </label>
+                  <button type="submit" className="bg-forest-900 hover:bg-forest-800 text-white px-5 py-3 rounded-lg text-sm font-bold">{editingRoomType ? 'Save Type' : '+ Add Room Type'}</button>
+                  {editingRoomType && <button type="button" onClick={() => { setEditingRoomType(null); setRoomTypeDraft(''); }} className="border border-slate-200 bg-white text-slate-600 px-4 py-3 rounded-lg text-sm font-bold">Cancel</button>}
+                </form>
+
+                <div className="space-y-3">
+                  {roomTypes.length === 0 && <div className="py-12 text-center text-sm text-slate-400">No room types available. Add your first room type above.</div>}
+                  {roomTypes.map((type) => {
+                    const assignedRooms = rooms.filter((room) => room.type === type).length;
+                    return (
+                      <div key={type} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 border border-slate-200 rounded-lg hover:border-emerald-400">
+                        <div className="flex items-center gap-3">
+                          <span className="w-10 h-10 bg-emerald-50 text-emerald-700 rounded-lg flex items-center justify-center text-xl">◇</span>
+                          <div><h4 className="font-bold text-slate-800">{type}</h4><p className="text-xs text-slate-400">{assignedRooms} assigned room{assignedRooms === 1 ? '' : 's'}</p></div>
+                        </div>
+                        <div className="flex gap-2">
+                          <button type="button" onClick={() => startEditingRoomType(type)} className="px-4 py-2 border border-slate-200 text-slate-600 hover:border-emerald-500 hover:text-emerald-700 rounded-lg text-xs font-bold">Edit</button>
+                          <button type="button" onClick={() => deleteRoomType(type)} className="px-4 py-2 border border-red-200 text-red-600 hover:bg-red-50 rounded-lg text-xs font-bold">Delete</button>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -2069,10 +2747,7 @@
 
                       <div className="flex items-center gap-2">
                         <button
-                          onClick={() => {
-                            setReviews(reviews.filter(r => r.id !== rev.id));
-                            showToast('Review removed.');
-                          }}
+                          onClick={() => deleteReview(rev.id)}
                           className="text-xs text-red-600 hover:bg-red-50 px-3 py-1.5 rounded-lg font-bold transition"
                         >
                           Delete
@@ -2084,172 +2759,215 @@
               </div>
             )}
 
+            {/* TAB: PROPERTY SETTINGS */}
+            {adminTab === 'settings' && (
+              <div className="bg-white rounded-xl p-5 sm:p-8 border border-slate-200 shadow-sm">
+                <div className="mb-8">
+                  <h3 className="text-xl font-extrabold text-forest-950">Property Settings</h3>
+                  <p className="text-xs text-slate-500 mt-1">These details are used across the public website and booking experience.</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-5xl">
+                  {[
+                    { key: 'name', label: 'Property Name', type: 'text' },
+                    { key: 'tagline', label: 'Tagline', type: 'text' },
+                    { key: 'phone', label: 'Phone Number', type: 'tel' },
+                    { key: 'whatsapp', label: 'WhatsApp Number', type: 'tel' },
+                    { key: 'email', label: 'Official Email', type: 'email' },
+                    { key: 'wifiSpeed', label: 'Wi-Fi Speed', type: 'text' },
+                    { key: 'checkInTime', label: 'Check-In Time', type: 'text' },
+                    { key: 'checkOutTime', label: 'Check-Out Time', type: 'text' }
+                  ].map((field) => (
+                    <label key={field.key} className="block">
+                      <span className="block text-xs font-bold uppercase tracking-wide text-slate-500 mb-2">{field.label}</span>
+                      <input type={field.type} value={hotelConfig[field.key] || ''} onChange={(event) => setHotelConfig({ ...hotelConfig, [field.key]: event.target.value })} className="w-full px-4 py-3 rounded-lg border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600" />
+                    </label>
+                  ))}
+                  <label className="block md:col-span-2">
+                    <span className="block text-xs font-bold uppercase tracking-wide text-slate-500 mb-2">Property Address</span>
+                    <textarea rows="3" value={hotelConfig.location || ''} onChange={(event) => setHotelConfig({ ...hotelConfig, location: event.target.value })} className="w-full px-4 py-3 rounded-lg border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600"></textarea>
+                  </label>
+                </div>
+
+                <div className="mt-7 pt-6 border-t border-slate-100 flex items-center gap-4">
+                  <button onClick={saveHotelSettings} className="bg-forest-900 text-white px-6 py-3 rounded-lg text-sm font-bold hover:bg-forest-800">Save Changes</button>
+                  <span className="text-xs text-slate-400">Changes are automatically stored in this browser.</span>
+                </div>
+              </div>
+            )}
+
             {/* TAB: HOSTINGER MYSQL DATABASE SYNC & PHP ENDPOINTS */}
             {adminTab === 'mysql' && (
-              <div className="bg-white rounded-3xl p-6 sm:p-8 border border-stone-200 shadow-sm">
-                <div className="max-w-3xl">
+              <div className="bg-white rounded-xl p-6 sm:p-8 border border-slate-200 shadow-sm">
+                <div className="max-w-4xl">
                   <span className="text-emerald-600 font-bold text-xs uppercase tracking-wider font-mono">
-                    Hostinger cPanel / hPanel MySQL Integration
+                    Hostinger PHP + MySQL Integration
                   </span>
-                  <h3 className="font-serif text-2xl font-bold text-forest-950 mt-1 mb-2">
-                    Production Database Schema & API Setup
+                  <h3 className="text-2xl font-extrabold text-forest-950 mt-2 mb-2">
+                    Database & API Deployment
                   </h3>
-                  <p className="text-stone-600 text-xs sm:text-sm mb-6 leading-relaxed">
-                    This website has built-in local reactive storage, plus direct MySQL ready compatibility. Simply create a database in your <b>Hostinger MySQL Databases</b> menu and use the schema and PHP API below.
+                  <p className="text-slate-600 text-sm mb-7 leading-relaxed">
+                    On the demo domain, bookings, rooms, room types, queries, reviews, settings, and admin authentication use the server-side PHP API and MySQL database automatically.
                   </p>
 
-                  {/* DB Settings Form */}
-                  <div className="bg-stone-50 p-6 rounded-2xl border border-stone-200 space-y-4 mb-6">
-                    <h4 className="font-bold text-sm text-forest-950 font-serif">Hostinger DB Connection Credentials</h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-                      <div>
-                        <label className="block text-stone-500 font-bold mb-1">Hostinger DB Host</label>
-                        <input 
-                          type="text" 
-                          value={hotelConfig.dbHost || 'localhost'} 
-                          onChange={(e) => setHotelConfig({...hotelConfig, dbHost: e.target.value})}
-                          className="w-full px-3 py-2 rounded-lg border border-stone-300 font-mono text-xs bg-white"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-stone-500 font-bold mb-1">Database Name</label>
-                        <input 
-                          type="text" 
-                          value={hotelConfig.dbName || 'u123456_checkinn'} 
-                          onChange={(e) => setHotelConfig({...hotelConfig, dbName: e.target.value})}
-                          className="w-full px-3 py-2 rounded-lg border border-stone-300 font-mono text-xs bg-white"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-stone-500 font-bold mb-1">DB Username</label>
-                        <input 
-                          type="text" 
-                          value={hotelConfig.dbUser || 'u123456_root'} 
-                          onChange={(e) => setHotelConfig({...hotelConfig, dbUser: e.target.value})}
-                          className="w-full px-3 py-2 rounded-lg border border-stone-300 font-mono text-xs bg-white"
-                        />
-                      </div>
-                    </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-7 text-sm">
+                    <div className="p-5 bg-emerald-50 border border-emerald-100 rounded-lg"><span className="text-xs uppercase font-bold text-emerald-700">Website</span><code className="block mt-2 text-slate-700">https://demo.checkinnhomes.com/</code></div>
+                    <div className="p-5 bg-sky-50 border border-sky-100 rounded-lg"><span className="text-xs uppercase font-bold text-sky-700">API Endpoint</span><code className="block mt-2 text-slate-700">/api/index.php</code></div>
+                    <div className="p-5 bg-amber-50 border border-amber-100 rounded-lg"><span className="text-xs uppercase font-bold text-amber-700">MySQL Database</span><code className="block mt-2 text-slate-700">u605122432_checkinnhomes</code></div>
+                    <div className="p-5 bg-violet-50 border border-violet-100 rounded-lg"><span className="text-xs uppercase font-bold text-violet-700">Uploads</span><code className="block mt-2 text-slate-700">/api/uploads/</code></div>
                   </div>
 
-                  {/* Ready SQL Schema */}
-                  <div className="mb-6">
-                    <div className="flex justify-between items-center mb-2">
-                      <h4 className="text-xs font-bold uppercase tracking-wider text-stone-700">1. SQL Schema (Run in Hostinger phpMyAdmin):</h4>
-                      <button 
-                        onClick={() => {
-                          navigator.clipboard.writeText(`CREATE TABLE rooms (id VARCHAR(50) PRIMARY KEY, name VARCHAR(100), price INT, capacity VARCHAR(50), description TEXT, image TEXT);
-CREATE TABLE bookings (id VARCHAR(50) PRIMARY KEY, guest_name VARCHAR(100), email VARCHAR(100), phone VARCHAR(50), room_name VARCHAR(100), check_in DATE, check_out DATE, guests INT, total_amount INT, status VARCHAR(50), created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
-CREATE TABLE queries (id VARCHAR(50) PRIMARY KEY, name VARCHAR(100), email VARCHAR(100), phone VARCHAR(50), subject VARCHAR(150), message TEXT, status VARCHAR(50) DEFAULT 'New', created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
-CREATE TABLE reviews (id VARCHAR(50) PRIMARY KEY, name VARCHAR(100), city VARCHAR(100), rating INT, room VARCHAR(100), comment TEXT, approved BOOLEAN DEFAULT TRUE);`);
-                          showToast('SQL Schema copied to clipboard!');
-                        }}
-                        className="text-xs text-forest-800 font-bold hover:underline"
-                      >
-                        📋 Copy SQL
-                      </button>
-                    </div>
-                    <pre className="bg-forest-950 text-emerald-300 text-[11px] p-4 rounded-2xl overflow-x-auto font-mono">
-{`CREATE TABLE rooms (
-  id VARCHAR(50) PRIMARY KEY,
-  name VARCHAR(100),
-  price INT,
-  capacity VARCHAR(50),
-  description TEXT,
-  image TEXT
-);
+                  <div className="p-5 border border-slate-200 rounded-lg mb-6">
+                    <h4 className="font-bold text-forest-950 mb-3">Deployment Checklist</h4>
+                    <ol className="space-y-2 text-sm text-slate-600 list-decimal pl-5">
+                      <li>Upload the complete project into the demo subdomain document root.</li>
+                      <li>Open <code className="text-emerald-700">/api/install.php?key=checkinn-install-2026</code> once.</li>
+                      <li>Confirm the installer reports success, then delete <code>api/install.php</code>.</li>
+                      <li>Log in to Admin and use this connection test.</li>
+                    </ol>
+                  </div>
 
-CREATE TABLE bookings (
-  id VARCHAR(50) PRIMARY KEY,
-  guest_name VARCHAR(100),
-  email VARCHAR(100),
-  phone VARCHAR(50),
-  room_name VARCHAR(100),
-  check_in DATE,
-  check_out DATE,
-  guests INT,
-  total_amount INT,
-  status VARCHAR(50),
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                    <button onClick={testApiConnection} className="bg-forest-900 hover:bg-forest-800 text-white px-5 py-3 rounded-lg text-sm font-bold">Test API Connection</button>
+                    {apiConnectionStatus !== 'idle' && <p className={`text-sm font-semibold ${apiConnectionStatus.startsWith('Connected') ? 'text-emerald-700' : apiConnectionStatus.startsWith('Testing') ? 'text-sky-700' : 'text-amber-700'}`}>{apiConnectionStatus}</p>}
+                  </div>
 
-CREATE TABLE queries (
-  id VARCHAR(50) PRIMARY KEY,
-  name VARCHAR(100),
-  email VARCHAR(100),
-  phone VARCHAR(50),
-  subject VARCHAR(150),
-  message TEXT,
-  status VARCHAR(50) DEFAULT 'New'
-);`}
-                    </pre>
+                  <div className="mt-7 p-4 bg-red-50 border border-red-100 rounded-lg text-xs text-red-700">
+                    Before production: change the database password, admin password, and install key in <code>api/config.php</code>.
                   </div>
                 </div>
               </div>
             )}
-          </div>
+              </main>
+            </div>
 
           {/* EDIT ROOM MODAL */}
           {editingRoom && (
             <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-              <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-stone-200">
+              <div className="bg-white rounded-xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl border border-slate-200 max-h-[92vh] overflow-y-auto">
                 <div className="flex justify-between items-center mb-6">
-                  <h3 className="font-serif text-xl font-bold text-forest-950">Edit Room: {editingRoom.name}</h3>
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-widest text-emerald-700">Room Management</p>
+                    <h3 className="text-xl font-extrabold text-forest-950 mt-1">{editingRoom.isNew ? 'Add New Room' : `Edit Room: ${editingRoom.name}`}</h3>
+                  </div>
                   <button onClick={() => setEditingRoom(null)} className="text-stone-400 hover:text-stone-700 font-bold text-lg">✕</button>
                 </div>
 
                 <form onSubmit={handleSaveRoom} className="space-y-4 text-xs">
-                  <div>
-                    <label className="block font-bold text-stone-500 mb-1">Room Display Name</label>
-                    <input 
-                      type="text" 
-                      value={editingRoom.name}
-                      onChange={(e) => setEditingRoom({...editingRoom, name: e.target.value})}
-                      className="w-full px-3 py-2 border rounded-xl text-sm font-medium"
-                      required
-                    />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <label className="block">
+                      <span className="block font-bold text-slate-500 mb-1">Room Display Name *</span>
+                      <input type="text" value={editingRoom.name} onChange={(e) => setEditingRoom({...editingRoom, name: e.target.value})} className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm font-medium" required />
+                    </label>
+                    <label className="block">
+                      <span className="block font-bold text-slate-500 mb-1">Room Type *</span>
+                      <select value={editingRoom.type} onChange={(e) => setEditingRoom({...editingRoom, type: e.target.value})} className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm font-medium bg-white cursor-pointer" required>
+                        <option value="" disabled>Select room type</option>
+                        {roomTypes.map((type) => <option key={type} value={type}>{type}</option>)}
+                      </select>
+                    </label>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                    <p className="font-bold text-amber-800 mb-3">Pricing Plans</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <label className="block">
+                        <span className="block font-bold text-slate-500 mb-1">Room Only (EP) ₹ *</span>
+                        <input type="number" min="0" value={editingRoom.price} onChange={(e) => setEditingRoom({...editingRoom, price: Number(e.target.value)})} className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm font-bold" required />
+                      </label>
+                      <label className="block">
+                        <span className="block font-bold text-slate-500 mb-1">With Breakfast (CP) ₹</span>
+                        <input type="number" min="0" value={editingRoom.breakfastPrice || ''} onChange={(e) => setEditingRoom({...editingRoom, breakfastPrice: e.target.value})} className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm font-bold" />
+                      </label>
+                      <label className="block">
+                        <span className="block font-bold text-slate-500 mb-1">With Meals (MAP) ₹</span>
+                        <input type="number" min="0" value={editingRoom.mealsPrice || ''} onChange={(e) => setEditingRoom({...editingRoom, mealsPrice: e.target.value})} className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm font-bold" />
+                      </label>
+                    </div>
+                    <p className="text-[10px] text-amber-700 mt-2">EP = Room Only | CP = Room + Breakfast | MAP = Room + Meals</p>
+                  </div>
+
+                  <div className="max-w-xs">
                     <div>
-                      <label className="block font-bold text-stone-500 mb-1">Nightly Price (₹)</label>
+                      <label className="block font-bold text-slate-500 mb-1">Original Price (₹)</label>
                       <input 
-                        type="number" 
-                        value={editingRoom.price}
-                        onChange={(e) => setEditingRoom({...editingRoom, price: Number(e.target.value)})}
-                        className="w-full px-3 py-2 border rounded-xl text-sm font-bold text-forest-950"
-                        required
+                        type="number"
+                        min="0"
+                        value={editingRoom.originalPrice || ''}
+                        onChange={(e) => setEditingRoom({...editingRoom, originalPrice: e.target.value})}
+                        className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm font-medium"
                       />
                     </div>
-                    <div>
-                      <label className="block font-bold text-stone-500 mb-1">Capacity</label>
-                      <input 
-                        type="text" 
-                        value={editingRoom.capacity}
-                        onChange={(e) => setEditingRoom({...editingRoom, capacity: e.target.value})}
-                        className="w-full px-3 py-2 border rounded-xl text-sm font-medium"
-                      />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <label className="block"><span className="block font-bold text-slate-500 mb-1">Capacity *</span><input type="text" value={editingRoom.capacity} onChange={(e) => setEditingRoom({...editingRoom, capacity: e.target.value})} className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm" required /></label>
+                    <label className="block"><span className="block font-bold text-slate-500 mb-1">Bed Type *</span><input type="text" value={editingRoom.bed} onChange={(e) => setEditingRoom({...editingRoom, bed: e.target.value})} className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm" required /></label>
+                    <label className="block"><span className="block font-bold text-slate-500 mb-1">Room Size</span><input type="text" value={editingRoom.size || ''} onChange={(e) => setEditingRoom({...editingRoom, size: e.target.value})} placeholder="e.g. 320 sq.ft" className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm" /></label>
+                  </div>
+
+                  <div className="p-4 sm:p-5 bg-sky-50/60 border border-sky-200 rounded-lg">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                      <div>
+                        <p className="font-bold text-slate-800">Room Photos *</p>
+                        <p className="text-[11px] text-slate-500 mt-0.5">Add multiple photos and select one as the main image.</p>
+                      </div>
+                      <label className="inline-flex items-center justify-center gap-2 bg-forest-900 hover:bg-forest-800 text-white px-4 py-2.5 rounded-lg text-xs font-bold cursor-pointer">
+                        <span>＋</span> Upload Photos
+                        <input type="file" accept="image/*" multiple onChange={uploadRoomImages} className="sr-only" />
+                      </label>
                     </div>
+
+                    <div className="flex flex-col sm:flex-row gap-2 mb-4">
+                      <input
+                        type="url"
+                        value={editingRoom.newGalleryUrl || ''}
+                        onChange={(event) => setEditingRoom({ ...editingRoom, newGalleryUrl: event.target.value })}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter') {
+                            event.preventDefault();
+                            addRoomImageUrl();
+                          }
+                        }}
+                        placeholder="Paste image URL"
+                        className="flex-1 px-3 py-2.5 border border-slate-200 rounded-lg text-xs font-mono bg-white"
+                      />
+                      <button type="button" onClick={addRoomImageUrl} className="px-4 py-2.5 border border-sky-300 bg-white text-sky-700 hover:bg-sky-100 rounded-lg text-xs font-bold">Add URL</button>
+                    </div>
+
+                    {editingRoom.gallery?.length ? (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        {Array.from(new Set([editingRoom.image, ...editingRoom.gallery].filter(Boolean))).map((imageUrl, index) => {
+                          const isMain = editingRoom.image === imageUrl;
+                          return (
+                            <div key={`${imageUrl.slice(0, 80)}-${index}`} className={`relative bg-white border-2 rounded-lg overflow-hidden ${isMain ? 'border-amber-500' : 'border-slate-200'}`}>
+                              <img src={imageUrl} alt={`Room photo ${index + 1}`} className="w-full aspect-[4/3] object-cover" />
+                              {isMain && <span className="absolute top-2 left-2 bg-amber-500 text-forest-950 px-2 py-1 rounded text-[9px] font-black uppercase">Main Image</span>}
+                              <div className="grid grid-cols-2 border-t border-slate-100">
+                                <button type="button" onClick={() => setMainRoomImage(imageUrl)} disabled={isMain} className="px-2 py-2 text-[10px] font-bold text-emerald-700 hover:bg-emerald-50 disabled:text-slate-300 disabled:bg-slate-50">{isMain ? 'Selected' : 'Set Main'}</button>
+                                <button type="button" onClick={() => removeRoomImage(imageUrl)} className="px-2 py-2 text-[10px] font-bold text-red-600 hover:bg-red-50 border-l border-slate-100">Remove</button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="border border-dashed border-sky-300 bg-white py-8 text-center text-xs text-slate-400 rounded-lg">No photos added yet. Upload photos or add an image URL.</div>
+                    )}
                   </div>
 
                   <div>
-                    <label className="block font-bold text-stone-500 mb-1">Image URL</label>
-                    <input 
-                      type="url" 
-                      value={editingRoom.image}
-                      onChange={(e) => setEditingRoom({...editingRoom, image: e.target.value})}
-                      className="w-full px-3 py-2 border rounded-xl text-xs font-mono"
-                      required
-                    />
+                    <label className="block font-bold text-slate-500 mb-1">Amenities (comma separated)</label>
+                    <input type="text" value={editingRoom.amenitiesText ?? editingRoom.amenities.join(', ')} onChange={(e) => setEditingRoom({...editingRoom, amenitiesText: e.target.value})} placeholder="Wi-Fi, AC, TV, Private Bathroom" className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm" />
                   </div>
 
                   <div>
-                    <label className="block font-bold text-stone-500 mb-1">Room Description</label>
+                    <label className="block font-bold text-slate-500 mb-1">Room Description *</label>
                     <textarea 
                       rows="3"
                       value={editingRoom.description}
                       onChange={(e) => setEditingRoom({...editingRoom, description: e.target.value})}
-                      className="w-full px-3 py-2 border rounded-xl text-xs font-medium"
+                      className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm font-medium"
                       required
                     ></textarea>
                   </div>
@@ -2258,21 +2976,22 @@ CREATE TABLE queries (
                     <button
                       type="button"
                       onClick={() => setEditingRoom(null)}
-                      className="flex-1 py-2.5 rounded-xl border border-stone-300 font-bold text-stone-600 hover:bg-stone-50"
+                      className="flex-1 py-2.5 rounded-lg border border-slate-300 font-bold text-slate-600 hover:bg-slate-50"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
-                      className="flex-1 py-2.5 rounded-xl bg-forest-900 text-amber-300 font-bold hover:bg-forest-800 shadow"
+                      className="flex-1 py-2.5 rounded-lg bg-forest-900 text-white font-bold hover:bg-forest-800 shadow"
                     >
-                      Save Room Changes
+                      {editingRoom.isNew ? 'Add Room' : 'Save Changes'}
                     </button>
                   </div>
                 </form>
               </div>
             </div>
           )}
+        </div>
         </div>
       );
     }
@@ -2602,10 +3321,10 @@ CREATE TABLE queries (
                 <p className="text-xs text-stone-300 leading-relaxed">
                   Your trusted stay partner in Rishikesh, offering comfortable rooms, modern amenities, and a peaceful experience in the heart of Tapovan.
                 </p>
-                <div className="flex gap-3 text-stone-400 text-sm">
-                  <span className="cursor-pointer hover:text-amber-400">📷 Instagram</span>
-                  <span className="cursor-pointer hover:text-amber-400">📘 Facebook</span>
-                  <span className="cursor-pointer hover:text-amber-400">📍 Google</span>
+                <div className="flex flex-wrap gap-3 text-stone-400 text-sm">
+                  <a href="https://www.instagram.com/checkinnhomes" target="_blank" rel="noreferrer" className="hover:text-amber-400">Instagram</a>
+                  <a href="https://www.facebook.com/people/Check-Inn-Homes/61588184592316/" target="_blank" rel="noreferrer" className="hover:text-amber-400">Facebook</a>
+                  <a href="https://www.youtube.com/@checkInnHomes" target="_blank" rel="noreferrer" className="hover:text-amber-400">YouTube</a>
                 </div>
               </div>
 
