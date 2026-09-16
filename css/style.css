@@ -1,0 +1,41 @@
+﻿/* Custom Smooth Utilities */
+    * {
+      scroll-behavior: smooth;
+    }
+    body {
+      background-color: #FAF7F2;
+      color: #1f2937;
+      overflow-x: hidden;
+    }
+    .hero-gradient {
+      background: linear-gradient(180deg, rgba(13, 48, 37, 0.45) 0%, rgba(6, 26, 20, 0.85) 100%);
+    }
+    .glass-card {
+      background: rgba(255, 255, 255, 0.88);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+    }
+    .glass-dark {
+      background: rgba(13, 48, 37, 0.92);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #FAF7F2;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #144636;
+      border-radius: 4px;
+    }
+    .hide-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .hide-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
