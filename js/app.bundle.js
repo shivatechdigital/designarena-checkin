@@ -199,6 +199,11 @@ function App() {
   const currentPage = document.body.dataset.page || "home";
   const setCurrentPage = navigateToPage;
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [adminAuthenticated, setAdminAuthenticated] = useState(() => !API_ENABLED && (localStorage.getItem("cih_admin_authenticated") === "true" || sessionStorage.getItem("cih_admin_authenticated") === "true"));
+  useEffect(() => {
+    if (!API_ENABLED) return;
+    apiRequest("auth").then((data) => setAdminAuthenticated(Boolean(data.authenticated))).catch(() => setAdminAuthenticated(false));
+  }, []);
   const [rooms, setRooms] = useState(() => {
     const saved = localStorage.getItem("cih_rooms_official_v1");
     return saved ? JSON.parse(saved) : INITIAL_ROOMS;
@@ -358,7 +363,8 @@ function App() {
       mobileMenuOpen,
       setMobileMenuOpen,
       hotelConfig,
-      openBookingEngine
+      openBookingEngine,
+      adminAuthenticated
     }
   ), /* @__PURE__ */ React.createElement("main", { className: "flex-grow" }, currentPage === "home" && /* @__PURE__ */ React.createElement(
     HomePage,
@@ -469,11 +475,12 @@ function App() {
     {
       hotelConfig,
       setCurrentPage,
-      openBookingEngine
+      openBookingEngine,
+      adminAuthenticated
     }
   ));
 }
-function Navbar({ currentPage, setCurrentPage, mobileMenuOpen, setMobileMenuOpen, hotelConfig, openBookingEngine }) {
+function Navbar({ currentPage, setCurrentPage, mobileMenuOpen, setMobileMenuOpen, hotelConfig, openBookingEngine, adminAuthenticated }) {
   return /* @__PURE__ */ React.createElement("header", { className: "sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-stone-200 shadow-sm transition-all" }, /* @__PURE__ */ React.createElement("div", { className: "bg-forest-900 text-stone-200 text-xs py-1.5 px-4 sm:px-8 flex justify-between items-center border-b border-forest-800" }, /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-4" }, /* @__PURE__ */ React.createElement("span", { className: "flex items-center gap-1 font-medium" }, "\u{1F4CD} Secret Waterfall Rd, Upper Tapovan, Rishikesh"), /* @__PURE__ */ React.createElement("span", { className: "hidden md:inline text-forest-500" }, "|"), /* @__PURE__ */ React.createElement("span", { className: "hidden md:inline text-emerald-300" }, "\u{1F343} Peaceful Ganga Valley Stay")), /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-5" }, /* @__PURE__ */ React.createElement("a", { href: `tel:${hotelConfig.phone}`, className: "hover:text-amber-400 font-semibold flex items-center gap-1 transition" }, "\u{1F4DE} ", hotelConfig.phone), /* @__PURE__ */ React.createElement(
     "button",
     {
@@ -481,7 +488,7 @@ function Navbar({ currentPage, setCurrentPage, mobileMenuOpen, setMobileMenuOpen
       className: "text-[11px] bg-forest-800 hover:bg-forest-500 text-amber-300 px-2.5 py-0.5 rounded transition font-mono",
       title: "Staff login"
     },
-    "Login"
+    adminAuthenticated ? "Dashboard" : "Login"
   ))), /* @__PURE__ */ React.createElement("div", { className: "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" }, /* @__PURE__ */ React.createElement("div", { className: "flex justify-between items-center h-20" }, /* @__PURE__ */ React.createElement(
     "div",
     {
@@ -1886,7 +1893,7 @@ function RoomDetailModal({ room, onClose, onBookNow }) {
     "/night) \u2192"
   ))), /* @__PURE__ */ React.createElement("div", { className: "pt-4 border-t border-stone-200" }, /* @__PURE__ */ React.createElement("h4", { className: "text-xs font-bold uppercase tracking-wider text-stone-500 mb-3" }, "Room Amenities"), /* @__PURE__ */ React.createElement("div", { className: "grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs" }, room.amenities.map((a, idx) => /* @__PURE__ */ React.createElement("div", { key: idx, className: "flex items-center gap-1.5 text-stone-700" }, /* @__PURE__ */ React.createElement("span", { className: "text-emerald-600" }, "\u2713"), " ", a))))));
 }
-function Footer({ hotelConfig, setCurrentPage, openBookingEngine }) {
+function Footer({ hotelConfig, setCurrentPage, openBookingEngine, adminAuthenticated }) {
   return /* @__PURE__ */ React.createElement("footer", { className: "bg-forest-950 text-white pt-16 pb-12 border-t border-forest-900" }, /* @__PURE__ */ React.createElement("div", { className: "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" }, /* @__PURE__ */ React.createElement("div", { className: "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 pb-12 border-b border-forest-900" }, /* @__PURE__ */ React.createElement("div", { className: "space-y-4" }, /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-3" }, /* @__PURE__ */ React.createElement("div", { className: "w-10 h-10 rounded-2xl bg-forest-900 text-amber-400 flex items-center justify-center font-serif text-2xl font-bold border border-forest-800" }, "C"), /* @__PURE__ */ React.createElement("h2", { className: "font-serif text-2xl font-bold tracking-tight text-white" }, "Checkinn ", /* @__PURE__ */ React.createElement("span", { className: "text-amber-400" }, "Homes"))), /* @__PURE__ */ React.createElement("p", { className: "text-xs text-stone-300 leading-relaxed" }, "Your trusted stay partner in Rishikesh, offering comfortable rooms, modern amenities, and a peaceful experience in the heart of Tapovan."), /* @__PURE__ */ React.createElement("div", { className: "flex flex-wrap gap-3 text-stone-400 text-sm" }, /* @__PURE__ */ React.createElement("a", { href: "https://www.instagram.com/checkinnhomes", target: "_blank", rel: "noreferrer", className: "hover:text-amber-400" }, "Instagram"), /* @__PURE__ */ React.createElement("a", { href: "https://www.facebook.com/people/Check-Inn-Homes/61588184592316/", target: "_blank", rel: "noreferrer", className: "hover:text-amber-400" }, "Facebook"), /* @__PURE__ */ React.createElement("a", { href: "https://www.youtube.com/@checkInnHomes", target: "_blank", rel: "noreferrer", className: "hover:text-amber-400" }, "YouTube"))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h3", { className: "font-serif text-base font-bold text-amber-300 mb-4" }, "Quick Links"), /* @__PURE__ */ React.createElement("ul", { className: "space-y-2 text-xs text-stone-300" }, ["Home", "Our Rooms", "About Us", "Guest Stories", "Contact & Map"].map((name, i) => {
     const pages = ["home", "rooms", "about", "feedback", "contact"];
     return /* @__PURE__ */ React.createElement("li", { key: i }, /* @__PURE__ */ React.createElement(
@@ -1907,6 +1914,6 @@ function Footer({ hotelConfig, setCurrentPage, openBookingEngine }) {
       className: "text-xs text-amber-400 font-bold hover:underline"
     },
     "Check Availability \u2192"
-  ))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h3", { className: "font-serif text-base font-bold text-amber-300 mb-4" }, "Contact Info"), /* @__PURE__ */ React.createElement("div", { className: "space-y-3 text-xs text-stone-300" }, /* @__PURE__ */ React.createElement("p", { className: "leading-snug" }, "\u{1F4CD} ", hotelConfig.location), /* @__PURE__ */ React.createElement("p", null, "\u{1F4DE} Phone: ", /* @__PURE__ */ React.createElement("a", { href: `tel:${hotelConfig.phone}`, className: "text-amber-300 hover:underline" }, hotelConfig.phone)), /* @__PURE__ */ React.createElement("p", null, "\u2709\uFE0F Email: ", /* @__PURE__ */ React.createElement("a", { href: `mailto:${hotelConfig.email}`, className: "text-amber-300 hover:underline" }, hotelConfig.email))))), /* @__PURE__ */ React.createElement("div", { className: "pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-stone-400" }, /* @__PURE__ */ React.createElement("div", null, "\xA9 ", (/* @__PURE__ */ new Date()).getFullYear(), " Checkinn Homes Rishikesh. All rights reserved."), /* @__PURE__ */ React.createElement("div", { className: "flex gap-4" }, /* @__PURE__ */ React.createElement("button", { onClick: () => setCurrentPage("admin"), className: "text-amber-400 hover:underline" }, "\u{1F510} Staff Admin Panel"), /* @__PURE__ */ React.createElement("span", null, "\u2022"), /* @__PURE__ */ React.createElement("span", null, "Upper Tapovan, Uttarakhand 249192")))));
+  ))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h3", { className: "font-serif text-base font-bold text-amber-300 mb-4" }, "Contact Info"), /* @__PURE__ */ React.createElement("div", { className: "space-y-3 text-xs text-stone-300" }, /* @__PURE__ */ React.createElement("p", { className: "leading-snug" }, "\u{1F4CD} ", hotelConfig.location), /* @__PURE__ */ React.createElement("p", null, "\u{1F4DE} Phone: ", /* @__PURE__ */ React.createElement("a", { href: `tel:${hotelConfig.phone}`, className: "text-amber-300 hover:underline" }, hotelConfig.phone)), /* @__PURE__ */ React.createElement("p", null, "\u2709\uFE0F Email: ", /* @__PURE__ */ React.createElement("a", { href: `mailto:${hotelConfig.email}`, className: "text-amber-300 hover:underline" }, hotelConfig.email))))), /* @__PURE__ */ React.createElement("div", { className: "pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-stone-400" }, /* @__PURE__ */ React.createElement("div", null, "\xA9 ", (/* @__PURE__ */ new Date()).getFullYear(), " Checkinn Homes Rishikesh. All rights reserved."), /* @__PURE__ */ React.createElement("div", { className: "flex gap-4" }, /* @__PURE__ */ React.createElement("button", { onClick: () => setCurrentPage("admin"), className: "text-amber-400 hover:underline" }, adminAuthenticated ? "Dashboard" : "Login"), /* @__PURE__ */ React.createElement("span", null, "\u2022"), /* @__PURE__ */ React.createElement("span", null, "Upper Tapovan, Uttarakhand 249192")))));
 }
 ReactDOM.createRoot(document.getElementById("root")).render(/* @__PURE__ */ React.createElement(App, null));

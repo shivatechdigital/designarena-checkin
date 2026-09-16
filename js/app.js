@@ -182,6 +182,12 @@
       const currentPage = document.body.dataset.page || 'home';
       const setCurrentPage = navigateToPage;
       const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+      const [adminAuthenticated, setAdminAuthenticated] = useState(() => !API_ENABLED && (localStorage.getItem('cih_admin_authenticated') === 'true' || sessionStorage.getItem('cih_admin_authenticated') === 'true'));
+
+      useEffect(() => {
+        if (!API_ENABLED) return;
+        apiRequest('auth').then((data) => setAdminAuthenticated(Boolean(data.authenticated))).catch(() => setAdminAuthenticated(false));
+      }, []);
 
       // Core Dynamic Data with LocalStorage Persistence
       const [rooms, setRooms] = useState(() => {
@@ -370,6 +376,7 @@
               setMobileMenuOpen={setMobileMenuOpen}
               hotelConfig={hotelConfig}
               openBookingEngine={openBookingEngine}
+              adminAuthenticated={adminAuthenticated}
             />
           )}
 
@@ -492,6 +499,7 @@
               hotelConfig={hotelConfig} 
               setCurrentPage={setCurrentPage}
               openBookingEngine={openBookingEngine}
+              adminAuthenticated={adminAuthenticated}
             />
           )}
         </div>
@@ -499,7 +507,7 @@
     }
 
     // --- NAVIGATION COMPONENT ---
-    function Navbar({ currentPage, setCurrentPage, mobileMenuOpen, setMobileMenuOpen, hotelConfig, openBookingEngine }) {
+    function Navbar({ currentPage, setCurrentPage, mobileMenuOpen, setMobileMenuOpen, hotelConfig, openBookingEngine, adminAuthenticated }) {
       return (
         <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-stone-200 shadow-sm transition-all">
           {/* Top banner */}
@@ -520,7 +528,7 @@
                 className="text-[11px] bg-forest-800 hover:bg-forest-500 text-amber-300 px-2.5 py-0.5 rounded transition font-mono"
                 title="Staff login"
               >
-                Login
+                {adminAuthenticated ? 'Dashboard' : 'Login'}
               </button>
             </div>
           </div>
@@ -3502,7 +3510,7 @@
     }
 
     // --- FOOTER COMPONENT ---
-    function Footer({ hotelConfig, setCurrentPage, openBookingEngine }) {
+    function Footer({ hotelConfig, setCurrentPage, openBookingEngine, adminAuthenticated }) {
       return (
         <footer className="bg-forest-950 text-white pt-16 pb-12 border-t border-forest-900">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -3591,7 +3599,7 @@
               </div>
               <div className="flex gap-4">
                 <button onClick={() => setCurrentPage('admin')} className="text-amber-400 hover:underline">
-                  🔐 Staff Admin Panel
+                  {adminAuthenticated ? 'Dashboard' : 'Login'}
                 </button>
                 <span>•</span>
                 <span>Upper Tapovan, Uttarakhand 249192</span>
