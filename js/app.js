@@ -1252,7 +1252,7 @@
 
               <div className="relative">
                 <img 
-                  src="https://checkinnhomes.com/wp-content/uploads/2026/03/checkinhome2-1-1024x768.webp" 
+                  src="https://checkinnhomes.com/wp-content/uploads/2026/03/JKS01209-2-1024x683.jpg" 
                   alt="Check In Homes property"
                   className="rounded-3xl shadow-2xl object-cover w-full h-[460px]"
                 />
