@@ -145,7 +145,7 @@ For every page, staff can manage:
 
 SEO settings are rendered server-side in the HTML `<head>`, so title, meta description, canonical URL, robots, Open Graph data, and schema are available to crawlers without JavaScript rendering.
 
-Use [SEO_COPY_PASTE_GUIDE.md](SEO_COPY_PASTE_GUIDE.md) for ready-to-paste, page-specific SEO content and JSON-LD examples.
+Use [SEO_COPY_PASTE_GUIDE.md](documents markdown/SEO_COPY_PASTE_GUIDE.md) for ready-to-paste, page-specific SEO content and JSON-LD examples.
 
 ### Search Discovery
 
@@ -201,7 +201,7 @@ git pull origin main
 ```
 
 3. Import the current `database/schema.sql` in phpMyAdmin to create missing tables. Existing data remains intact because tables use `CREATE TABLE IF NOT EXISTS`.
-4. Run any one-time database migrations listed in [HOSTINGER_DEPLOYMENT.md](HOSTINGER_DEPLOYMENT.md) when updating an existing installation.
+4. Run any one-time database migrations listed in [HOSTINGER_DEPLOYMENT.md](documents markdown/HOSTINGER_DEPLOYMENT.md) when updating an existing installation.
 5. Confirm `api/uploads/` is writable with permission `755` or `775` if Hostinger requires it.
 6. Hard refresh the website and admin panel after deployment.
 7. Test one full booking, room update, coupon activation, and SEO save before announcing changes.
