@@ -123,6 +123,13 @@ try {
             $stmt = db()->prepare('SELECT * FROM coupons WHERE id=?'); $stmt->execute([(int)db()->lastInsertId()]);
             json_response(coupon_from_row($stmt->fetch()), 201);
         }
+                if ($method === 'PUT') {
+                        require_fields($body, ['id', 'code', 'discountPercent']);
+                        $stmt = db()->prepare('UPDATE coupons SET code=?, discount_percent=?, minimum_amount=?, active=? WHERE id=?');
+                        $stmt->execute([strtoupper(trim((string)$body['code'])), (int)$body['discountPercent'], (int)($body['minimumAmount'] ?? 0), !empty($body['active']) ? 1 : 0, (int)$body['id']]);
+                        $stmt = db()->prepare('SELECT * FROM coupons WHERE id=?'); $stmt->execute([(int)$body['id']]);
+                        json_response(coupon_from_row($stmt->fetch()));
+                }
         if ($method === 'DELETE') {
             require_fields($body, ['id']);
             $stmt = db()->prepare('DELETE FROM coupons WHERE id=?'); $stmt->execute([(int)$body['id']]);

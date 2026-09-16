@@ -1872,6 +1872,7 @@
       const [adminLoginForm, setAdminLoginForm] = useState({ email: '', password: '', remember: true });
       const [apiConnectionStatus, setApiConnectionStatus] = useState('idle');
       const [couponDraft, setCouponDraft] = useState({ code: '', discountPercent: 10, minimumAmount: 0, active: true });
+      const [editingCouponId, setEditingCouponId] = useState(null);
 
       // Room Editor Modal state
       const [editingRoom, setEditingRoom] = useState(null);
@@ -2183,11 +2184,19 @@
       const addCoupon = async (event) => {
         event.preventDefault();
         try {
-          const coupon = API_ENABLED ? await apiRequest('coupons', { method: 'POST', body: couponDraft }) : { ...couponDraft, id: Date.now(), code: couponDraft.code.toUpperCase() };
-          setCoupons([coupon, ...coupons]);
+          const isEditing = editingCouponId !== null;
+          const payload = isEditing ? { ...couponDraft, id: editingCouponId } : couponDraft;
+          const coupon = API_ENABLED ? await apiRequest('coupons', { method: isEditing ? 'PUT' : 'POST', body: payload }) : { ...payload, id: isEditing ? editingCouponId : Date.now(), code: couponDraft.code.toUpperCase() };
+          setCoupons(isEditing ? coupons.map((item) => item.id === coupon.id ? coupon : item) : [coupon, ...coupons]);
           setCouponDraft({ code: '', discountPercent: 10, minimumAmount: 0, active: true });
-          showToast('Coupon added and published.');
+          setEditingCouponId(null);
+          showToast(isEditing ? 'Coupon updated.' : 'Coupon added and published.');
         } catch (error) { showToast(error.message, 'error'); }
+      };
+
+      const startEditingCoupon = (coupon) => {
+        setEditingCouponId(coupon.id);
+        setCouponDraft({ code: coupon.code, discountPercent: coupon.discountPercent, minimumAmount: coupon.minimumAmount, active: coupon.active });
       };
 
       const deleteCoupon = async (couponId) => {
@@ -2797,9 +2806,9 @@
                   <input value={couponDraft.code} onChange={(event) => setCouponDraft({ ...couponDraft, code: event.target.value.toUpperCase() })} placeholder="Code e.g. STAY10" className="px-3 py-2.5 border border-slate-200 rounded-lg text-sm" required />
                   <input type="number" min="1" max="100" value={couponDraft.discountPercent} onChange={(event) => setCouponDraft({ ...couponDraft, discountPercent: Number(event.target.value) })} placeholder="Discount %" className="px-3 py-2.5 border border-slate-200 rounded-lg text-sm" required />
                   <input type="number" min="0" value={couponDraft.minimumAmount} onChange={(event) => setCouponDraft({ ...couponDraft, minimumAmount: Number(event.target.value) })} placeholder="Minimum amount" className="px-3 py-2.5 border border-slate-200 rounded-lg text-sm" required />
-                  <button type="submit" className="bg-forest-900 text-white px-4 py-2.5 rounded-lg text-sm font-bold">Add Coupon</button>
+                  <div className="flex gap-2"><button type="submit" className="bg-forest-900 text-white px-4 py-2.5 rounded-lg text-sm font-bold">{editingCouponId !== null ? 'Save Coupon' : 'Add Coupon'}</button>{editingCouponId !== null && <button type="button" onClick={() => { setEditingCouponId(null); setCouponDraft({ code: '', discountPercent: 10, minimumAmount: 0, active: true }); }} className="border border-slate-200 bg-white px-3 py-2.5 rounded-lg text-sm">Cancel</button>}</div>
                 </form>
-                <div className="space-y-2">{coupons.length === 0 ? <p className="text-sm text-slate-400 py-5">No coupons added yet.</p> : coupons.map((coupon) => <div key={coupon.id} className="flex items-center justify-between gap-3 p-4 border border-slate-200 rounded-lg"><span className="font-bold text-forest-950">{coupon.code}</span><span className="text-xs text-slate-500">{coupon.discountPercent}% off on Rs {Number(coupon.minimumAmount).toLocaleString('en-IN')}+</span><button onClick={() => deleteCoupon(coupon.id)} className="text-xs font-bold text-red-600">Delete</button></div>)}</div>
+                <div className="space-y-2">{coupons.length === 0 ? <p className="text-sm text-slate-400 py-5">No coupons added yet.</p> : coupons.map((coupon) => <div key={coupon.id} className="flex items-center justify-between gap-3 p-4 border border-slate-200 rounded-lg"><span className="font-bold text-forest-950">{coupon.code}</span><span className="text-xs text-slate-500">{coupon.discountPercent}% off on Rs {Number(coupon.minimumAmount).toLocaleString('en-IN')}+</span><div className="flex gap-3"><button onClick={() => startEditingCoupon(coupon)} className="text-xs font-bold text-emerald-700">Edit</button><button onClick={() => deleteCoupon(coupon.id)} className="text-xs font-bold text-red-600">Delete</button></div></div>)}</div>
               </div>
             )}
 
