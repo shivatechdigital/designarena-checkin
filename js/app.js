@@ -531,9 +531,7 @@
                 onClick={() => { setCurrentPage('home'); window.scrollTo(0,0); }}
                 className="cursor-pointer flex items-center gap-3 group"
               >
-                <div className="w-11 h-11 rounded-2xl bg-forest-900 text-amber-400 flex items-center justify-center font-serif text-2xl font-bold shadow-md shadow-forest-900/20 group-hover:scale-105 transition transform">
-                  C
-                </div>
+                <div className="w-11 h-11 rounded-2xl bg-forest-900 text-amber-400 flex items-center justify-center font-serif text-2xl font-bold shadow-md shadow-forest-900/20 group-hover:scale-105 transition transform overflow-hidden">{hotelConfig.logoUrl ? <img src={hotelConfig.logoUrl} alt={`${hotelConfig.name || 'Checkinn Homes'} logo`} className="w-full h-full object-contain bg-white p-1" /> : 'C'}</div>
                 <div>
                   <h1 className="font-serif text-2xl font-bold tracking-tight text-forest-950 leading-tight">
                     Checkinn <span className="text-amber-600">Homes</span>
@@ -2189,6 +2187,17 @@
         } catch (error) { showToast(error.message, 'error'); }
       };
 
+      const uploadPropertyLogo = async (event) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+        try {
+          const [logoUrl] = API_ENABLED ? await apiUploadImages([file]) : [await compressRoomImage(file)];
+          setHotelConfig({ ...hotelConfig, logoUrl });
+          showToast('Logo uploaded. Save changes to publish it.');
+        } catch (error) { showToast(error.message || 'Logo upload failed.', 'error'); }
+        event.target.value = '';
+      };
+
       const addCoupon = async (event) => {
         event.preventDefault();
         try {
@@ -2374,7 +2383,7 @@
           <div className="flex min-h-screen">
             <aside className="hidden lg:flex w-64 shrink-0 bg-white border-r border-slate-200 px-5 py-7 flex-col sticky top-0 h-screen overflow-y-auto">
               <button onClick={() => navigateToPage('home')} className="flex items-center gap-3 px-2 mb-10 text-left">
-                <span className="w-11 h-11 bg-forest-900 text-amber-300 flex items-center justify-center font-serif text-2xl font-bold rounded-lg">C</span>
+                <span className="w-11 h-11 bg-forest-900 text-amber-300 flex items-center justify-center font-serif text-2xl font-bold rounded-lg overflow-hidden">{hotelConfig.logoUrl ? <img src={hotelConfig.logoUrl} alt={`${hotelConfig.name || 'Checkinn Homes'} logo`} className="w-full h-full object-contain bg-white p-1" /> : 'C'}</span>
                 <span>
                   <strong className="block text-lg text-forest-950">Check In Homes</strong>
                   <small className="text-slate-400">Admin Portal</small>
@@ -2869,6 +2878,7 @@
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-5xl">
+                  <label className="block md:col-span-2"><span className="block text-xs font-bold uppercase tracking-wide text-slate-500 mb-2">Property Logo URL</span><div className="flex flex-col sm:flex-row gap-3"><input type="url" value={hotelConfig.logoUrl || ''} onChange={(event) => setHotelConfig({ ...hotelConfig, logoUrl: event.target.value })} placeholder="https://example.com/logo.png" className="flex-1 px-4 py-3 rounded-lg border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600" /><label className="cursor-pointer bg-forest-900 text-white px-4 py-3 rounded-lg text-sm font-bold text-center"><input type="file" accept="image/jpeg,image/png,image/webp" onChange={uploadPropertyLogo} className="sr-only" />Upload Logo</label></div>{hotelConfig.logoUrl && <img src={hotelConfig.logoUrl} alt="Current property logo" className="mt-3 h-16 max-w-48 object-contain object-left border border-slate-200 rounded-lg p-2" />}</label>
                   {[
                     { key: 'name', label: 'Property Name', type: 'text' },
                     { key: 'tagline', label: 'Tagline', type: 'text' },
