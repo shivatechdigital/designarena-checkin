@@ -1903,6 +1903,9 @@
       const [profileEditorOpen, setProfileEditorOpen] = useState(false);
       const [adminProfile, setAdminProfile] = useState({ display_name: 'Property Admin', profile_photo: '', email: ADMIN_CREDENTIALS.email });
       const [profileDraft, setProfileDraft] = useState({ displayName: 'Property Admin', profilePhoto: '', currentPassword: '', newPassword: '', deactivate: false });
+      const seoPages = [{ key: 'home', label: 'Home' }, { key: 'rooms', label: 'Rooms' }, { key: 'aboutus', label: 'About Us' }, { key: 'gallery', label: 'Gallery' }, { key: 'feedback', label: 'Guest Stories' }, { key: 'contact', label: 'Contact' }];
+      const [selectedSeoPage, setSelectedSeoPage] = useState('home');
+      const [seoDraft, setSeoDraft] = useState({ pageKey: 'home', title: 'Checkinn Homes | Stay in Upper Tapovan, Rishikesh', metaDescription: '', focusKeyword: '', canonicalPath: '/', robots: 'index,follow', ogImage: '', h1: '', introText: '', schemaJson: '' });
 
       // Room Editor Modal state
       const [editingRoom, setEditingRoom] = useState(null);
@@ -1954,6 +1957,7 @@
         { id: 'queries', icon: '◌', label: 'Guest Queries', count: newQueries },
         { id: 'feedback', icon: '★', label: 'Reviews', count: reviews.length },
         { id: 'coupons', icon: '%', label: 'Coupons', count: coupons.length },
+        { id: 'seo', icon: '⌕', label: 'SEO' },
         { id: 'settings', icon: '⚙', label: 'Property Settings' },
         { id: 'mysql', icon: '⌘', label: 'Database Setup' }
       ];
@@ -2343,6 +2347,25 @@
         } catch (error) { showToast(error.message, 'error'); }
       };
 
+      const openSeoPage = async (pageKey) => {
+        setSelectedSeoPage(pageKey);
+        const fallback = seoPages.find((page) => page.key === pageKey);
+        try {
+          const seoRecords = API_ENABLED ? await apiRequest('seo') : [];
+          const saved = seoRecords.find((record) => record.page_key === pageKey) || {};
+          setSeoDraft({ pageKey, title: saved.title || `Checkinn Homes | ${fallback.label}`, metaDescription: saved.meta_description || '', focusKeyword: saved.focus_keyword || '', canonicalPath: saved.canonical_path || (pageKey === 'home' ? '/' : `/${pageKey}`), robots: saved.robots || 'index,follow', ogImage: saved.og_image || '', h1: saved.h1 || '', introText: saved.intro_text || '', schemaJson: saved.schema_json || '' });
+        } catch (error) { showToast(error.message, 'error'); }
+      };
+
+      const saveSeoPage = async (event) => {
+        event.preventDefault();
+        try {
+          if (seoDraft.schemaJson.trim()) JSON.parse(seoDraft.schemaJson);
+          if (API_ENABLED) await apiRequest('seo', { method: 'PUT', body: seoDraft });
+          showToast('SEO settings saved. They are now included in the page source.');
+        } catch (error) { showToast(error.message === 'Unexpected token' ? 'Schema must be valid JSON.' : error.message, 'error'); }
+      };
+
       if (isAdminAuthChecking) {
         return <div className="min-h-screen bg-forest-950 text-white flex items-center justify-center"><div className="text-center"><div className="w-12 h-12 border-4 border-amber-300 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div><p className="text-sm text-slate-300">Checking secure session...</p></div></div>;
       }
@@ -2421,7 +2444,7 @@
                 {adminNavItems.map((item) => (
                   <button
                     key={item.id}
-                    onClick={() => setAdminTab(item.id)}
+                    onClick={() => { setAdminTab(item.id); if (item.id === 'seo') openSeoPage(selectedSeoPage); }}
                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold transition ${adminTab === item.id ? 'bg-forest-900 text-white shadow-md' : 'text-slate-500 hover:bg-emerald-50 hover:text-forest-900'}`}
                   >
                     <span className={`w-6 text-center text-lg ${adminTab === item.id ? 'text-amber-300' : 'text-emerald-600'}`}>{item.icon}</span>
@@ -2882,6 +2905,25 @@
               </div>
             )}
 
+            {adminTab === 'seo' && (
+              <div className="bg-white rounded-xl p-5 sm:p-8 border border-slate-200 shadow-sm">
+                <div className="mb-7"><h3 className="text-xl font-extrabold text-forest-950">Search Engine Optimization</h3><p className="text-xs text-slate-500 mt-1">These settings are server-rendered in the page source for search engines and social sharing.</p></div>
+                <div className="flex gap-2 overflow-x-auto pb-2 border-b border-slate-100 mb-6">{seoPages.map((page) => <button key={page.key} onClick={() => openSeoPage(page.key)} className={`shrink-0 px-3 py-2 rounded-lg text-xs font-bold ${selectedSeoPage === page.key ? 'bg-forest-900 text-white' : 'bg-slate-100 text-slate-600'}`}>{page.label}</button>)}</div>
+                <form onSubmit={saveSeoPage} className="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-5xl">
+                  <label className="block md:col-span-2"><span className="block text-xs font-bold uppercase tracking-wide text-slate-500 mb-2">SEO Title</span><input maxLength="160" value={seoDraft.title} onChange={(event) => setSeoDraft({ ...seoDraft, title: event.target.value })} className="w-full px-4 py-3 rounded-lg border border-slate-200 bg-slate-50 text-sm" required /><small className="text-[11px] text-slate-400">{seoDraft.title.length}/60 recommended characters</small></label>
+                  <label className="block md:col-span-2"><span className="block text-xs font-bold uppercase tracking-wide text-slate-500 mb-2">Meta Description</span><textarea rows="3" maxLength="320" value={seoDraft.metaDescription} onChange={(event) => setSeoDraft({ ...seoDraft, metaDescription: event.target.value })} className="w-full px-4 py-3 rounded-lg border border-slate-200 bg-slate-50 text-sm" /><small className="text-[11px] text-slate-400">{seoDraft.metaDescription.length}/160 recommended characters</small></label>
+                  <label className="block"><span className="block text-xs font-bold uppercase tracking-wide text-slate-500 mb-2">Focus Keyword</span><input value={seoDraft.focusKeyword} onChange={(event) => setSeoDraft({ ...seoDraft, focusKeyword: event.target.value })} placeholder="e.g. hotel in Upper Tapovan" className="w-full px-4 py-3 rounded-lg border border-slate-200 bg-slate-50 text-sm" /></label>
+                  <label className="block"><span className="block text-xs font-bold uppercase tracking-wide text-slate-500 mb-2">Canonical Path</span><input value={seoDraft.canonicalPath} onChange={(event) => setSeoDraft({ ...seoDraft, canonicalPath: event.target.value })} placeholder="/rooms" className="w-full px-4 py-3 rounded-lg border border-slate-200 bg-slate-50 text-sm" /></label>
+                  <label className="block"><span className="block text-xs font-bold uppercase tracking-wide text-slate-500 mb-2">Robots</span><select value={seoDraft.robots} onChange={(event) => setSeoDraft({ ...seoDraft, robots: event.target.value })} className="w-full px-4 py-3 rounded-lg border border-slate-200 bg-slate-50 text-sm"><option value="index,follow">Index, Follow</option><option value="noindex,nofollow">Noindex, Nofollow</option></select></label>
+                  <label className="block"><span className="block text-xs font-bold uppercase tracking-wide text-slate-500 mb-2">Open Graph Image URL</span><input type="url" value={seoDraft.ogImage} onChange={(event) => setSeoDraft({ ...seoDraft, ogImage: event.target.value })} placeholder="https://..." className="w-full px-4 py-3 rounded-lg border border-slate-200 bg-slate-50 text-sm" /></label>
+                  <label className="block md:col-span-2"><span className="block text-xs font-bold uppercase tracking-wide text-slate-500 mb-2">Primary H1</span><input value={seoDraft.h1} onChange={(event) => setSeoDraft({ ...seoDraft, h1: event.target.value })} className="w-full px-4 py-3 rounded-lg border border-slate-200 bg-slate-50 text-sm" /><small className="text-[11px] text-slate-400">Use one clear page topic. Keep it aligned with the visible page heading.</small></label>
+                  <label className="block md:col-span-2"><span className="block text-xs font-bold uppercase tracking-wide text-slate-500 mb-2">Content / Internal Linking Notes</span><textarea rows="4" value={seoDraft.introText} onChange={(event) => setSeoDraft({ ...seoDraft, introText: event.target.value })} placeholder="Outline search intent, key sections, FAQs, and meaningful links to other site pages." className="w-full px-4 py-3 rounded-lg border border-slate-200 bg-slate-50 text-sm" /></label>
+                  <label className="block md:col-span-2"><span className="block text-xs font-bold uppercase tracking-wide text-slate-500 mb-2">JSON-LD Schema</span><textarea rows="7" value={seoDraft.schemaJson} onChange={(event) => setSeoDraft({ ...seoDraft, schemaJson: event.target.value })} placeholder={'{"@context":"https://schema.org","@type":"LodgingBusiness","name":"Checkinn Homes"}'} className="w-full px-4 py-3 rounded-lg border border-slate-200 bg-slate-50 font-mono text-xs" /><small className="text-[11px] text-slate-400">Only add valid JSON matching visible page content.</small></label>
+                  <div className="md:col-span-2 pt-2"><button type="submit" className="bg-forest-900 text-white px-6 py-3 rounded-lg text-sm font-bold">Save SEO Settings</button></div>
+                </form>
+              </div>
+            )}
+
             {adminTab === 'coupons' && (
               <div className="bg-white rounded-xl p-5 sm:p-8 border border-slate-200 shadow-sm">
                 <div className="mb-7"><h3 className="text-xl font-extrabold text-forest-950">Booking Coupons</h3><p className="text-xs text-slate-500 mt-1">Shown only for eligible Pay Online bookings.</p></div>
@@ -3176,6 +3218,7 @@
     // --- INTERACTIVE BOOKING ENGINE MODAL ---
     function BookingEngineModal({ rooms, selectedRoom, initialDates, coupons, onClose, onConfirmBooking }) {
       const [currentRoom, setCurrentRoom] = useState(selectedRoom || rooms[0]);
+      const [selectedMealPlan, setSelectedMealPlan] = useState((selectedRoom || rooms[0])?.mealPlans?.[0] || '');
       const [formData, setFormData] = useState({
         guestName: '',
         email: '',
@@ -3200,13 +3243,15 @@
         return diff > 0 ? diff : 1;
       }, [formData.checkIn, formData.checkOut]);
 
+      const selectedPlanPrice = Number(String(selectedMealPlan).match(/₹\s*([\d,]+)/)?.[1]?.replace(/,/g, '')) || Number(currentRoom.price);
+
       // Calculate Total with Addons
       const subtotal = useMemo(() => {
-        let base = currentRoom.price * nights;
+        let base = selectedPlanPrice * nights;
         if (formData.addRafting) base += 850 * formData.guests;
         if (formData.addScooty) base += 500 * nights;
         return base;
-      }, [currentRoom, nights, formData.addRafting, formData.addScooty, formData.guests]);
+      }, [selectedPlanPrice, nights, formData.addRafting, formData.addScooty, formData.guests]);
 
       const eligibleCoupons = coupons.filter((coupon) => coupon.active && subtotal >= Number(coupon.minimumAmount || 0));
       const appliedCoupon = eligibleCoupons.find((coupon) => coupon.code.toUpperCase() === formData.couponCode.trim().toUpperCase());
@@ -3232,7 +3277,7 @@
           totalAmount: totalAmount,
           status: 'Confirmed',
           paymentMode: formData.paymentMode,
-          notes: `${formData.specialRequests || ''} [WhatsApp: ${formData.whatsapp}] ${appliedCoupon ? `[Coupon: ${appliedCoupon.code}, -Rs ${discountAmount}]` : ''} ${formData.addRafting ? '[+Rafting]' : ''} ${formData.addScooty ? '[+Scooty]' : ''}`.trim()
+          notes: `${formData.specialRequests || ''} [Rate Plan: ${selectedMealPlan}] [WhatsApp: ${formData.whatsapp}] ${appliedCoupon ? `[Coupon: ${appliedCoupon.code}, -Rs ${discountAmount}]` : ''} ${formData.addRafting ? '[+Rafting]' : ''} ${formData.addScooty ? '[+Scooty]' : ''}`.trim()
         };
 
         onConfirmBooking(newBooking);
@@ -3269,7 +3314,7 @@
                     <button
                       type="button"
                       key={r.id}
-                      onClick={() => setCurrentRoom(r)}
+                      onClick={() => { setCurrentRoom(r); setSelectedMealPlan(r.mealPlans?.[0] || ''); }}
                       className={`p-3 rounded-2xl text-left border transition ${
                         currentRoom.id === r.id
                           ? 'border-forest-900 bg-forest-50/70 ring-2 ring-forest-900'
@@ -3281,6 +3326,14 @@
                     </button>
                   ))}
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold uppercase text-stone-500 mb-2">Select Pricing Plan</label>
+                <select value={selectedMealPlan} onChange={(event) => setSelectedMealPlan(event.target.value)} className="w-full px-4 py-3 rounded-xl border border-stone-200 text-sm font-bold bg-stone-50/50 text-forest-950 focus:outline-none focus:ring-2 focus:ring-forest-800" required>
+                  {(currentRoom.mealPlans?.length ? currentRoom.mealPlans : [`Room Only (EP): ₹${currentRoom.price.toLocaleString('en-IN')}`]).map((plan) => <option key={plan} value={plan}>{plan}</option>)}
+                </select>
+                <p className="mt-2 text-xs text-stone-500">Selected plan: ₹{selectedPlanPrice.toLocaleString('en-IN')} per night</p>
               </div>
 
               {/* Step 2: Dates & Guests */}

@@ -81,6 +81,19 @@ ALTER TABLE admins
   ADD COLUMN active TINYINT(1) NOT NULL DEFAULT 1 AFTER profile_photo;
 ```
 
+## SEO setup
+
+Import the latest `database/schema.sql` in phpMyAdmin to create the `seo_pages` table. It does not remove existing data.
+
+After deployment, manage each page in `Admin -> SEO`. The saved title, meta description, canonical URL, robots setting, Open Graph image, and JSON-LD schema are rendered directly in the HTML source for crawlers.
+
+Verify these public SEO endpoints:
+
+```text
+https://demo.checkinnhomes.com/robots.txt
+https://demo.checkinnhomes.com/sitemap.xml
+```
+
 The current release saves the guest's payment choice and applies eligible coupons. For real online payment, connect a payment gateway such as Razorpay before advertising payment collection. Email confirmations use PHP `mail()` and require Hostinger mail to be configured. WhatsApp confirmations require an approved WhatsApp Business API provider (for example Meta Cloud API, Interakt, or WATI); the editable WhatsApp template is stored in Property Settings for that provider integration.
 
 The installer creates and seeds:

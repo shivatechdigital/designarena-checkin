@@ -217,6 +217,28 @@ try {
         }
     }
 
+    if ($resource === 'seo') {
+        $allowedPages = ['home', 'rooms', 'aboutus', 'gallery', 'feedback', 'contact'];
+        if ($method === 'GET') {
+            $pageKey = (string)($_GET['page'] ?? '');
+            if ($pageKey !== '' && !in_array($pageKey, $allowedPages, true)) json_response(['error' => 'Invalid SEO page.'], 422);
+            if ($pageKey !== '') {
+                $stmt = db()->prepare('SELECT * FROM seo_pages WHERE page_key=?'); $stmt->execute([$pageKey]);
+                json_response($stmt->fetch() ?: []);
+            }
+            json_response(db()->query('SELECT * FROM seo_pages ORDER BY page_key')->fetchAll());
+        }
+        require_admin();
+        if ($method === 'PUT') {
+            require_fields($body, ['pageKey', 'title']);
+            if (!in_array($body['pageKey'], $allowedPages, true)) json_response(['error' => 'Invalid SEO page.'], 422);
+            $stmt = db()->prepare('INSERT INTO seo_pages (page_key,title,meta_description,focus_keyword,canonical_path,robots,og_image,h1,intro_text,schema_json) VALUES (?,?,?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE title=VALUES(title),meta_description=VALUES(meta_description),focus_keyword=VALUES(focus_keyword),canonical_path=VALUES(canonical_path),robots=VALUES(robots),og_image=VALUES(og_image),h1=VALUES(h1),intro_text=VALUES(intro_text),schema_json=VALUES(schema_json)');
+            $stmt->execute([$body['pageKey'], trim($body['title']), trim((string)($body['metaDescription'] ?? '')), trim((string)($body['focusKeyword'] ?? '')), trim((string)($body['canonicalPath'] ?? '')), $body['robots'] === 'noindex,nofollow' ? 'noindex,nofollow' : 'index,follow', trim((string)($body['ogImage'] ?? '')), trim((string)($body['h1'] ?? '')), trim((string)($body['introText'] ?? '')), trim((string)($body['schemaJson'] ?? ''))]);
+            $stmt = db()->prepare('SELECT * FROM seo_pages WHERE page_key=?'); $stmt->execute([$body['pageKey']]);
+            json_response($stmt->fetch());
+        }
+    }
+
     json_response(['error' => 'Endpoint not found.'], 404);
 } catch (PDOException $error) {
     try { if (db()->inTransaction()) db()->rollBack(); } catch (Throwable $ignored) {}
