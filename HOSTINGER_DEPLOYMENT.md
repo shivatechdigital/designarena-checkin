@@ -72,6 +72,15 @@ ALTER TABLE coupons
 UPDATE coupons SET discount_value = discount_percent WHERE discount_value = 0;
 ```
 
+For the admin account menu, run this one-time migration in phpMyAdmin on an existing installation:
+
+```sql
+ALTER TABLE admins
+  ADD COLUMN display_name VARCHAR(150) NOT NULL DEFAULT 'Property Admin' AFTER password_hash,
+  ADD COLUMN profile_photo MEDIUMTEXT NULL AFTER display_name,
+  ADD COLUMN active TINYINT(1) NOT NULL DEFAULT 1 AFTER profile_photo;
+```
+
 The current release saves the guest's payment choice and applies eligible coupons. For real online payment, connect a payment gateway such as Razorpay before advertising payment collection. Email confirmations use PHP `mail()` and require Hostinger mail to be configured. WhatsApp confirmations require an approved WhatsApp Business API provider (for example Meta Cloud API, Interakt, or WATI); the editable WhatsApp template is stored in Property Settings for that provider integration.
 
 The installer creates and seeds:

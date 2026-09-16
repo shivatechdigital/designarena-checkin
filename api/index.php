@@ -25,11 +25,18 @@ try {
 
     if ($resource === 'auth') {
         if ($method === 'GET') {
-            json_response(['authenticated' => is_admin(), 'csrfToken' => is_admin() ? csrf_token() : null]);
+            $profile = null;
+            if (is_admin()) {
+                $stmt = db()->prepare('SELECT email, display_name, profile_photo FROM admins WHERE id=? AND active=1');
+                $stmt->execute([$_SESSION['admin_id']]);
+                $profile = $stmt->fetch() ?: null;
+                if (!$profile) $_SESSION = [];
+            }
+            json_response(['authenticated' => $profile !== null, 'csrfToken' => $profile ? csrf_token() : null, 'profile' => $profile]);
         }
         if ($method === 'POST') {
             require_fields($body, ['email', 'password']);
-            $stmt = db()->prepare('SELECT id, email, password_hash FROM admins WHERE email=? LIMIT 1');
+            $stmt = db()->prepare('SELECT id, email, password_hash, display_name, profile_photo FROM admins WHERE email=? AND active=1 LIMIT 1');
             $stmt->execute([strtolower(trim((string)$body['email']))]);
             $admin = $stmt->fetch();
             if (!$admin || !password_verify((string)$body['password'], $admin['password_hash'])) {
@@ -38,13 +45,33 @@ try {
             session_regenerate_id(true);
             $_SESSION['admin_id'] = (int)$admin['id'];
             $_SESSION['admin_email'] = $admin['email'];
-            json_response(['ok' => true, 'email' => $admin['email'], 'csrfToken' => csrf_token()]);
+            json_response(['ok' => true, 'email' => $admin['email'], 'profile' => ['email' => $admin['email'], 'display_name' => $admin['display_name'], 'profile_photo' => $admin['profile_photo']], 'csrfToken' => csrf_token()]);
         }
         if ($method === 'DELETE') {
             require_admin();
             $_SESSION = [];
             session_destroy();
             json_response(['ok' => true]);
+        }
+        if ($method === 'PUT') {
+            require_admin();
+            require_fields($body, ['displayName']);
+            $params = [trim((string)$body['displayName']), trim((string)($body['profilePhoto'] ?? ''))];
+            $sql = 'UPDATE admins SET display_name=?, profile_photo=?';
+            if (!empty($body['newPassword'])) {
+                require_fields($body, ['currentPassword']);
+                $stmt = db()->prepare('SELECT password_hash FROM admins WHERE id=?'); $stmt->execute([$_SESSION['admin_id']]);
+                if (!password_verify((string)$body['currentPassword'], (string)$stmt->fetchColumn())) json_response(['error' => 'Current password is incorrect.'], 422);
+                $sql .= ', password_hash=?';
+                $params[] = password_hash((string)$body['newPassword'], PASSWORD_DEFAULT);
+            }
+            $deactivate = !empty($body['deactivate']);
+            if ($deactivate) $sql .= ', active=0';
+            $sql .= ' WHERE id=?'; $params[] = $_SESSION['admin_id'];
+            db()->prepare($sql)->execute($params);
+            if ($deactivate) { $_SESSION = []; session_destroy(); json_response(['ok' => true, 'deactivated' => true]); }
+            $stmt = db()->prepare('SELECT email, display_name, profile_photo FROM admins WHERE id=?'); $stmt->execute([$_SESSION['admin_id']]);
+            json_response(['ok' => true, 'profile' => $stmt->fetch()]);
         }
     }
 

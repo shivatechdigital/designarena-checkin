@@ -1874,6 +1874,10 @@
       const [couponDraft, setCouponDraft] = useState({ code: '', discountType: 'percentage', discountValue: 10, minimumAmount: 0, active: true });
       const [editingCouponId, setEditingCouponId] = useState(null);
       const [editingBooking, setEditingBooking] = useState(null);
+      const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+      const [profileEditorOpen, setProfileEditorOpen] = useState(false);
+      const [adminProfile, setAdminProfile] = useState({ display_name: 'Property Admin', profile_photo: '', email: ADMIN_CREDENTIALS.email });
+      const [profileDraft, setProfileDraft] = useState({ displayName: 'Property Admin', profilePhoto: '', currentPassword: '', newPassword: '', deactivate: false });
 
       // Room Editor Modal state
       const [editingRoom, setEditingRoom] = useState(null);
@@ -1883,7 +1887,10 @@
         let active = true;
         apiRequest('auth')
           .then((data) => {
-            if (active) setIsAdminAuthenticated(Boolean(data.authenticated));
+            if (active) {
+              setIsAdminAuthenticated(Boolean(data.authenticated));
+              if (data.profile) setAdminProfile(data.profile);
+            }
           })
           .catch(() => {
             if (active) setIsAdminAuthenticated(false);
@@ -2254,6 +2261,7 @@
             if (data.coupons) setCoupons(data.coupons);
             if (data.bookings) setBookings(data.bookings);
             if (data.queries) setQueries(data.queries);
+            if (result.profile) setAdminProfile(result.profile);
             if (data.hotelConfig) setHotelConfig((current) => ({ ...current, ...data.hotelConfig }));
           } else {
             if (adminLoginForm.email.trim().toLowerCase() !== ADMIN_CREDENTIALS.email || adminLoginForm.password !== ADMIN_CREDENTIALS.password) {
@@ -2279,6 +2287,24 @@
         sessionStorage.removeItem('cih_admin_authenticated');
         setAdminLoginForm({ email: '', password: '', remember: true });
         setIsAdminAuthenticated(false);
+      };
+
+      const openProfileEditor = () => {
+        setProfileDraft({ displayName: adminProfile.display_name || 'Property Admin', profilePhoto: adminProfile.profile_photo || '', currentPassword: '', newPassword: '', deactivate: false });
+        setAccountMenuOpen(false);
+        setProfileEditorOpen(true);
+      };
+
+      const saveProfile = async (event) => {
+        event.preventDefault();
+        if (profileDraft.deactivate && !window.confirm('Deactivate this account? You will be logged out and cannot sign in until it is reactivated in the database.')) return;
+        try {
+          const result = API_ENABLED ? await apiRequest('auth', { method: 'PUT', body: profileDraft }) : { profile: { display_name: profileDraft.displayName, profile_photo: profileDraft.profilePhoto, email: adminProfile.email }, deactivated: profileDraft.deactivate };
+          if (result.deactivated) { setProfileEditorOpen(false); setIsAdminAuthenticated(false); return; }
+          setAdminProfile(result.profile);
+          setProfileEditorOpen(false);
+          showToast('Profile updated.');
+        } catch (error) { showToast(error.message, 'error'); }
       };
 
       if (isAdminAuthChecking) {
@@ -2392,10 +2418,9 @@
                       <input value={bookingSearch} onChange={(event) => setBookingSearch(event.target.value)} onFocus={() => setAdminTab('bookings')} placeholder="Search bookings..." className="w-64 bg-slate-50 border border-slate-200 rounded-lg py-2 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600" />
                     </div>
                     <span className="hidden sm:inline text-xs text-slate-500">{new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
-                    <span className="w-10 h-10 rounded-full bg-forest-900 text-amber-300 flex items-center justify-center font-bold">A</span>
+                    <div className="relative"><button onClick={() => setAccountMenuOpen(!accountMenuOpen)} className="w-10 h-10 rounded-full bg-forest-900 text-amber-300 flex items-center justify-center font-bold overflow-hidden" aria-label="Open account menu">{adminProfile.profile_photo ? <img src={adminProfile.profile_photo} alt="Admin profile" className="w-full h-full object-cover" /> : (adminProfile.display_name || 'A').charAt(0).toUpperCase()}</button>{accountMenuOpen && <div className="absolute right-0 top-12 z-50 w-44 bg-white border border-slate-200 rounded-lg shadow-lg p-1.5"><button onClick={openProfileEditor} className="w-full text-left px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 rounded">Edit Profile</button><button onClick={handleAdminLogout} className="w-full text-left px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 rounded">Logout</button></div>}</div>
                   </div>
                 </div>
-
                 <nav className="lg:hidden flex gap-2 overflow-x-auto hide-scrollbar mt-4 pb-1" aria-label="Mobile admin navigation">
                   {adminNavItems.map((item) => (
                     <button key={item.id} onClick={() => setAdminTab(item.id)} className={`shrink-0 px-3 py-2 rounded-lg text-xs font-bold ${adminTab === item.id ? 'bg-forest-900 text-white' : 'bg-slate-100 text-slate-600'}`}>
@@ -2919,6 +2944,21 @@
             )}
               </main>
             </div>
+
+          {profileEditorOpen && (
+            <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+              <div className="w-full max-w-lg max-h-[92vh] overflow-y-auto bg-white rounded-xl shadow-2xl p-6 sm:p-8">
+                <div className="flex justify-between items-center mb-6"><div><p className="text-xs font-bold uppercase tracking-widest text-emerald-700">Account</p><h3 className="text-xl font-extrabold text-forest-950 mt-1">Edit Profile</h3></div><button onClick={() => setProfileEditorOpen(false)} className="text-slate-400 text-lg">x</button></div>
+                <form onSubmit={saveProfile} className="space-y-4">
+                  <label className="block text-xs font-bold text-slate-600">Display Name<input value={profileDraft.displayName} onChange={(event) => setProfileDraft({ ...profileDraft, displayName: event.target.value })} className="mt-1.5 w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm" required /></label>
+                  <label className="block text-xs font-bold text-slate-600">Profile Photo URL<input type="url" value={profileDraft.profilePhoto} onChange={(event) => setProfileDraft({ ...profileDraft, profilePhoto: event.target.value })} placeholder="https://example.com/photo.jpg" className="mt-1.5 w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm" /></label>
+                  <div className="pt-3 border-t border-slate-100"><p className="text-xs font-bold uppercase text-slate-500 mb-3">Change Password</p><div className="space-y-3"><input type="password" value={profileDraft.currentPassword} onChange={(event) => setProfileDraft({ ...profileDraft, currentPassword: event.target.value })} placeholder="Current password" className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm" /><input type="password" value={profileDraft.newPassword} onChange={(event) => setProfileDraft({ ...profileDraft, newPassword: event.target.value })} placeholder="New password" className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm" /></div></div>
+                  <label className="flex items-start gap-3 p-3 bg-red-50 border border-red-100 rounded-lg text-xs text-red-700"><input type="checkbox" checked={profileDraft.deactivate} onChange={(event) => setProfileDraft({ ...profileDraft, deactivate: event.target.checked })} className="mt-0.5" /><span><strong className="block">Deactivate account</strong>Stops this admin account from logging in until it is manually reactivated in the database.</span></label>
+                  <div className="flex justify-end gap-3 pt-3"><button type="button" onClick={() => setProfileEditorOpen(false)} className="px-5 py-2.5 border border-slate-200 rounded-lg text-sm font-bold text-slate-600">Cancel</button><button type="submit" className="px-5 py-2.5 bg-forest-900 text-white rounded-lg text-sm font-bold">Save Profile</button></div>
+                </form>
+              </div>
+            </div>
+          )}
 
           {/* EDIT ROOM MODAL */}
           {editingRoom && (
