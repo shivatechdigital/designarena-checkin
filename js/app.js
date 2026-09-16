@@ -56,6 +56,17 @@
       return data.urls || [];
     }
 
+    function loadRazorpayCheckout() {
+      if (window.Razorpay) return Promise.resolve();
+      return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+        script.onload = resolve;
+        script.onerror = () => reject(new Error('Razorpay checkout could not be loaded.'));
+        document.head.appendChild(script);
+      });
+    }
+
     // --- DEFAULT INITIAL DATA (Synced via localStorage) ---
     const INITIAL_ROOMS = [
       {
@@ -183,6 +194,7 @@
       const setCurrentPage = navigateToPage;
       const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
       const [adminAuthenticated, setAdminAuthenticated] = useState(() => !API_ENABLED && (localStorage.getItem('cih_admin_authenticated') === 'true' || sessionStorage.getItem('cih_admin_authenticated') === 'true'));
+      const [razorpayKeyId, setRazorpayKeyId] = useState('');
 
       useEffect(() => {
         if (!API_ENABLED) return;
@@ -265,6 +277,7 @@
             if (data.roomTypes) setRoomTypes(data.roomTypes);
             if (data.reviews) setReviews(data.reviews);
             if (data.coupons) setCoupons(data.coupons);
+                        if (data.razorpayKeyId) setRazorpayKeyId(data.razorpayKeyId);
             if (data.hotelConfig) setHotelConfig((current) => ({ ...current, ...data.hotelConfig }));
             if (data.bookings) setBookings(data.bookings);
             if (data.queries) setQueries(data.queries);
@@ -476,6 +489,7 @@
               selectedRoom={selectedRoomForBooking || rooms[0]}
               initialDates={quickBookForm}
               coupons={coupons}
+              razorpayKeyId={razorpayKeyId}
               onClose={() => setBookingModalOpen(false)}
               onConfirmBooking={async (newBooking) => {
                 try {
@@ -3216,9 +3230,10 @@
     }
 
     // --- INTERACTIVE BOOKING ENGINE MODAL ---
-    function BookingEngineModal({ rooms, selectedRoom, initialDates, coupons, onClose, onConfirmBooking }) {
+    function BookingEngineModal({ rooms, selectedRoom, initialDates, coupons, razorpayKeyId, onClose, onConfirmBooking }) {
       const [currentRoom, setCurrentRoom] = useState(selectedRoom || rooms[0]);
       const [selectedMealPlan, setSelectedMealPlan] = useState((selectedRoom || rooms[0])?.mealPlans?.[0] || '');
+      const [isProcessingPayment, setIsProcessingPayment] = useState(false);
       const [formData, setFormData] = useState({
         guestName: '',
         email: '',
@@ -3258,7 +3273,7 @@
       const discountAmount = appliedCoupon ? Math.min(subtotal, appliedCoupon.discountType === 'fixed' ? Number(appliedCoupon.discountValue) : Math.round(subtotal * Number(appliedCoupon.discountValue) / 100)) : 0;
       const totalAmount = subtotal - discountAmount;
 
-      const handleSubmit = (e) => {
+      const handleSubmit = async (e) => {
         e.preventDefault();
         if (!formData.guestName || !formData.email || !formData.phone || !formData.whatsapp) {
           alert('Please provide your name, email, contact number, and WhatsApp number.');
@@ -3280,7 +3295,29 @@
           notes: `${formData.specialRequests || ''} [Rate Plan: ${selectedMealPlan}] [WhatsApp: ${formData.whatsapp}] ${appliedCoupon ? `[Coupon: ${appliedCoupon.code}, -Rs ${discountAmount}]` : ''} ${formData.addRafting ? '[+Rafting]' : ''} ${formData.addScooty ? '[+Scooty]' : ''}`.trim()
         };
 
-        onConfirmBooking(newBooking);
+        if (formData.paymentMode !== 'Pay Online') {
+          onConfirmBooking(newBooking);
+          return;
+        }
+        if (!API_ENABLED || !razorpayKeyId) {
+          alert('Online payment is not configured yet. Please choose Cash on Check-in or contact the property.');
+          return;
+        }
+        try {
+          setIsProcessingPayment(true);
+          const order = await apiRequest('payment', { method: 'POST', body: { amount: totalAmount * 100, receipt: newBooking.id } });
+          await loadRazorpayCheckout();
+          const payment = await new Promise((resolve, reject) => {
+            const checkout = new window.Razorpay({ key: order.keyId, amount: order.amount, currency: order.currency, name: 'Checkinn Homes', description: `${currentRoom.name} - ${selectedMealPlan}`, order_id: order.orderId, prefill: { name: formData.guestName, email: formData.email, contact: formData.phone }, theme: { color: '#0c3b2e' }, handler: resolve, modal: { ondismiss: () => reject(new Error('Payment was cancelled.')) } });
+            checkout.open();
+          });
+          await apiRequest('payment', { method: 'PUT', body: { orderId: payment.razorpay_order_id, paymentId: payment.razorpay_payment_id, signature: payment.razorpay_signature } });
+          onConfirmBooking({ ...newBooking, paymentMode: 'Pay Online - Paid', notes: `${newBooking.notes} [Razorpay Payment: ${payment.razorpay_payment_id}]` });
+        } catch (error) {
+          alert(error.message || 'Online payment could not be completed.');
+        } finally {
+          setIsProcessingPayment(false);
+        }
       };
 
       return (
@@ -3418,7 +3455,7 @@
               <div className="rounded-2xl border border-stone-200 p-4 space-y-3">
                 <span className="block text-xs font-bold uppercase text-stone-500">Payment Option</span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2"><label className={`p-3 rounded-xl border cursor-pointer text-sm font-bold ${formData.paymentMode === 'Cash on Check-in' ? 'border-forest-900 bg-forest-50' : 'border-stone-200'}`}><input type="radio" name="payment" checked={formData.paymentMode === 'Cash on Check-in'} onChange={() => setFormData({...formData, paymentMode: 'Cash on Check-in', couponCode: ''})} className="mr-2" />Cash on Check-in</label><label className={`p-3 rounded-xl border cursor-pointer text-sm font-bold ${formData.paymentMode === 'Pay Online' ? 'border-forest-900 bg-forest-50' : 'border-stone-200'}`}><input type="radio" name="payment" checked={formData.paymentMode === 'Pay Online'} onChange={() => setFormData({...formData, paymentMode: 'Pay Online'})} className="mr-2" />Pay Online</label></div>
-                {formData.paymentMode === 'Pay Online' && <div><label className="block text-xs font-bold uppercase text-stone-500 mb-1">Coupon Code</label><input list="booking-coupons" value={formData.couponCode} onChange={(e) => setFormData({...formData, couponCode: e.target.value.toUpperCase()})} placeholder={eligibleCoupons.length ? 'Enter or select a coupon' : 'No coupon currently eligible'} className="w-full px-4 py-2.5 rounded-xl border border-stone-200 text-sm" /><datalist id="booking-coupons">{eligibleCoupons.map((coupon) => <option key={coupon.id} value={coupon.code}>{coupon.discountType === 'fixed' ? `Rs ${coupon.discountValue} off` : `${coupon.discountValue}% off`}</option>)}</datalist>{appliedCoupon && <p className="mt-2 text-xs font-bold text-emerald-700">{appliedCoupon.code} applied: Rs {discountAmount.toLocaleString('en-IN')} saved</p>}</div>}
+                {formData.paymentMode === 'Pay Online' && <div><label className="block text-xs font-bold uppercase text-stone-500 mb-1">Coupon Code</label><input list="booking-coupons" value={formData.couponCode} onChange={(e) => setFormData({...formData, couponCode: e.target.value.toUpperCase()})} placeholder={eligibleCoupons.length ? 'Enter or select a coupon' : 'No coupon currently eligible'} className="w-full px-4 py-2.5 rounded-xl border border-stone-200 text-sm" /><datalist id="booking-coupons">{eligibleCoupons.map((coupon) => <option key={coupon.id} value={coupon.code}>{coupon.discountType === 'fixed' ? `Rs ${coupon.discountValue} off` : `${coupon.discountValue}% off`}</option>)}</datalist>{eligibleCoupons.length > 0 && <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">{eligibleCoupons.map((coupon) => <button type="button" key={coupon.id} onClick={() => setFormData({ ...formData, couponCode: coupon.code })} className={`text-left p-3 rounded-xl border transition ${formData.couponCode === coupon.code ? 'border-forest-900 bg-forest-50' : 'border-stone-200 hover:border-emerald-500'}`}><span className="block text-sm font-bold text-forest-950">{coupon.code}</span><span className="block mt-1 text-xs text-emerald-700">{coupon.discountType === 'fixed' ? `Rs ${coupon.discountValue} off` : `${coupon.discountValue}% off`} on Rs {Number(coupon.minimumAmount).toLocaleString('en-IN')}+</span></button>)}</div>}{appliedCoupon && <p className="mt-2 text-xs font-bold text-emerald-700">{appliedCoupon.code} applied: Rs {discountAmount.toLocaleString('en-IN')} saved</p>}</div>}
               </div>
 
               {/* Optional Experiences */}
@@ -3467,9 +3504,10 @@
 
                 <button
                   type="submit"
-                  className="w-full sm:w-auto px-8 py-3.5 bg-amber-500 hover:bg-amber-600 text-forest-950 font-bold rounded-xl shadow-lg transition transform active:scale-95 text-sm"
+                  disabled={isProcessingPayment}
+                  className="w-full sm:w-auto px-8 py-3.5 bg-amber-500 hover:bg-amber-600 disabled:opacity-60 text-forest-950 font-bold rounded-xl shadow-lg transition transform active:scale-95 text-sm"
                 >
-                  Confirm Instant Booking ➔
+                  {isProcessingPayment ? 'Opening Payment...' : formData.paymentMode === 'Pay Online' ? 'Pay Securely ➔' : 'Confirm Instant Booking ➔'}
                 </button>
               </div>
             </form>

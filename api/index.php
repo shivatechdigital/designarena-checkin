@@ -13,7 +13,7 @@ try {
         $types = array_column(db()->query('SELECT name FROM room_types ORDER BY name')->fetchAll(), 'name');
         $reviews = array_map('review_from_row', db()->query('SELECT * FROM reviews WHERE approved=1 ORDER BY created_at DESC')->fetchAll());
         $coupons = array_map('coupon_from_row', db()->query('SELECT * FROM coupons WHERE active=1 ORDER BY discount_value DESC')->fetchAll());
-        $response = ['rooms' => $rooms, 'roomTypes' => $types, 'reviews' => $reviews, 'coupons' => $coupons, 'hotelConfig' => settings_data()];
+        $response = ['rooms' => $rooms, 'roomTypes' => $types, 'reviews' => $reviews, 'coupons' => $coupons, 'hotelConfig' => settings_data(), 'razorpayKeyId' => RAZORPAY_KEY_ID];
         if (is_admin()) {
             $response['bookings'] = array_map('booking_from_row', db()->query('SELECT * FROM bookings ORDER BY created_at DESC')->fetchAll());
             $response['queries'] = array_map('query_from_row', db()->query('SELECT * FROM queries ORDER BY created_at DESC')->fetchAll());
@@ -73,6 +73,31 @@ try {
             $stmt = db()->prepare('SELECT email, display_name, profile_photo FROM admins WHERE id=?'); $stmt->execute([$_SESSION['admin_id']]);
             json_response(['ok' => true, 'profile' => $stmt->fetch()]);
         }
+    }
+
+    if ($resource === 'payment') {
+        if (RAZORPAY_KEY_ID === '' || RAZORPAY_KEY_SECRET === '') json_response(['error' => 'Online payment is not configured yet.'], 503);
+        if ($method === 'POST') {
+            require_fields($body, ['amount', 'receipt']);
+            $amount = (int)$body['amount'];
+            if ($amount < 100) json_response(['error' => 'Payment amount must be at least Rs 1.'], 422);
+            $curl = curl_init('https://api.razorpay.com/v1/orders');
+            curl_setopt_array($curl, [CURLOPT_POST => true, CURLOPT_RETURNTRANSFER => true, CURLOPT_USERPWD => RAZORPAY_KEY_ID . ':' . RAZORPAY_KEY_SECRET, CURLOPT_HTTPAUTH => CURLAUTH_BASIC, CURLOPT_HTTPHEADER => ['Content-Type: application/json'], CURLOPT_POSTFIELDS => json_encode(['amount' => $amount, 'currency' => 'INR', 'receipt' => substr((string)$body['receipt'], 0, 40), 'payment_capture' => 1])]);
+            $response = curl_exec($curl);
+            $status = (int)curl_getinfo($curl, CURLINFO_HTTP_CODE);
+            $curlError = curl_error($curl);
+            curl_close($curl);
+            $order = json_decode((string)$response, true);
+            if ($response === false || $status < 200 || $status >= 300 || !is_array($order) || empty($order['id'])) json_response(['error' => 'Could not create Razorpay order. ' . ($curlError ?: '')], 502);
+            json_response(['orderId' => $order['id'], 'amount' => $amount, 'currency' => 'INR', 'keyId' => RAZORPAY_KEY_ID]);
+        }
+        if ($method === 'PUT') {
+            require_fields($body, ['orderId', 'paymentId', 'signature']);
+            $expected = hash_hmac('sha256', $body['orderId'] . '|' . $body['paymentId'], RAZORPAY_KEY_SECRET);
+            if (!hash_equals($expected, (string)$body['signature'])) json_response(['error' => 'Razorpay payment verification failed.'], 422);
+            json_response(['ok' => true]);
+        }
+        json_response(['error' => 'Method not allowed.'], 405);
     }
 
     if ($resource === 'rooms') {

@@ -14,3 +14,7 @@ const APP_ENV = 'production';
 const SESSION_NAME = 'checkinn_admin';
 const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+
+// Razorpay test-mode credentials. Keep the Key Secret private on this server.
+const RAZORPAY_KEY_ID = 'rzp_test_TWfmtduM73FYlO';
+const RAZORPAY_KEY_SECRET = 'Ye2XcRi2feiP6Jh4MY8AunO6';

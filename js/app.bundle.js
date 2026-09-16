@@ -49,6 +49,16 @@ async function apiUploadImages(files) {
   if (!response.ok) throw new Error(data.error || "Image upload failed.");
   return data.urls || [];
 }
+function loadRazorpayCheckout() {
+  if (window.Razorpay) return Promise.resolve();
+  return new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.onload = resolve;
+    script.onerror = () => reject(new Error("Razorpay checkout could not be loaded."));
+    document.head.appendChild(script);
+  });
+}
 const INITIAL_ROOMS = [
   {
     id: "room-1",
@@ -200,6 +210,7 @@ function App() {
   const setCurrentPage = navigateToPage;
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [adminAuthenticated, setAdminAuthenticated] = useState(() => !API_ENABLED && (localStorage.getItem("cih_admin_authenticated") === "true" || sessionStorage.getItem("cih_admin_authenticated") === "true"));
+  const [razorpayKeyId, setRazorpayKeyId] = useState("");
   useEffect(() => {
     if (!API_ENABLED) return;
     apiRequest("auth").then((data) => setAdminAuthenticated(Boolean(data.authenticated))).catch(() => setAdminAuthenticated(false));
@@ -279,6 +290,7 @@ function App() {
         if (data.roomTypes) setRoomTypes(data.roomTypes);
         if (data.reviews) setReviews(data.reviews);
         if (data.coupons) setCoupons(data.coupons);
+        if (data.razorpayKeyId) setRazorpayKeyId(data.razorpayKeyId);
         if (data.hotelConfig) setHotelConfig((current) => ({ ...current, ...data.hotelConfig }));
         if (data.bookings) setBookings(data.bookings);
         if (data.queries) setQueries(data.queries);
@@ -455,6 +467,7 @@ function App() {
       selectedRoom: selectedRoomForBooking || rooms[0],
       initialDates: quickBookForm,
       coupons,
+      razorpayKeyId,
       onClose: () => setBookingModalOpen(false),
       onConfirmBooking: async (newBooking) => {
         try {
@@ -1726,9 +1739,10 @@ function AdminPanel({
     editingRoom.isNew ? "Add Room" : "Save Changes"
   ))))), editingBooking && /* @__PURE__ */ React.createElement("div", { className: "fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" }, /* @__PURE__ */ React.createElement("div", { className: "w-full max-w-2xl max-h-[92vh] overflow-y-auto bg-white rounded-xl shadow-2xl p-6 sm:p-8" }, /* @__PURE__ */ React.createElement("div", { className: "flex items-start justify-between gap-4 mb-6" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h3", { className: "text-xl font-extrabold text-forest-950" }, "Edit Booking"), /* @__PURE__ */ React.createElement("p", { className: "text-xs text-slate-500 mt-1" }, editingBooking.id)), /* @__PURE__ */ React.createElement("button", { onClick: () => setEditingBooking(null), className: "w-9 h-9 border border-slate-200 rounded-lg text-slate-500", "aria-label": "Close booking editor" }, "x")), /* @__PURE__ */ React.createElement("form", { onSubmit: saveBookingEdit, className: "grid grid-cols-1 sm:grid-cols-2 gap-4" }, /* @__PURE__ */ React.createElement("label", { className: "block text-xs font-bold text-slate-600" }, "Guest Name", /* @__PURE__ */ React.createElement("input", { value: editingBooking.guestName, onChange: (event) => setEditingBooking({ ...editingBooking, guestName: event.target.value }), className: "mt-1.5 w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm", required: true })), /* @__PURE__ */ React.createElement("label", { className: "block text-xs font-bold text-slate-600" }, "Email", /* @__PURE__ */ React.createElement("input", { type: "email", value: editingBooking.email, onChange: (event) => setEditingBooking({ ...editingBooking, email: event.target.value }), className: "mt-1.5 w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm", required: true })), /* @__PURE__ */ React.createElement("label", { className: "block text-xs font-bold text-slate-600" }, "Contact Number", /* @__PURE__ */ React.createElement("input", { value: editingBooking.phone, onChange: (event) => setEditingBooking({ ...editingBooking, phone: event.target.value }), className: "mt-1.5 w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm", required: true })), /* @__PURE__ */ React.createElement("label", { className: "block text-xs font-bold text-slate-600" }, "Room", /* @__PURE__ */ React.createElement("input", { value: editingBooking.roomName, onChange: (event) => setEditingBooking({ ...editingBooking, roomName: event.target.value }), className: "mt-1.5 w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm", required: true })), /* @__PURE__ */ React.createElement("label", { className: "block text-xs font-bold text-slate-600" }, "Check-in", /* @__PURE__ */ React.createElement("input", { type: "date", value: editingBooking.checkIn, onChange: (event) => setEditingBooking({ ...editingBooking, checkIn: event.target.value }), className: "mt-1.5 w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm", required: true })), /* @__PURE__ */ React.createElement("label", { className: "block text-xs font-bold text-slate-600" }, "Check-out", /* @__PURE__ */ React.createElement("input", { type: "date", value: editingBooking.checkOut, onChange: (event) => setEditingBooking({ ...editingBooking, checkOut: event.target.value }), className: "mt-1.5 w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm", required: true })), /* @__PURE__ */ React.createElement("label", { className: "block text-xs font-bold text-slate-600" }, "Guests", /* @__PURE__ */ React.createElement("input", { type: "number", min: "1", value: editingBooking.guests, onChange: (event) => setEditingBooking({ ...editingBooking, guests: Number(event.target.value) }), className: "mt-1.5 w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm", required: true })), /* @__PURE__ */ React.createElement("label", { className: "block text-xs font-bold text-slate-600" }, "Total Amount (Rs)", /* @__PURE__ */ React.createElement("input", { type: "number", min: "0", value: editingBooking.totalAmount, onChange: (event) => setEditingBooking({ ...editingBooking, totalAmount: Number(event.target.value) }), className: "mt-1.5 w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm", required: true })), /* @__PURE__ */ React.createElement("label", { className: "block text-xs font-bold text-slate-600" }, "Payment Mode", /* @__PURE__ */ React.createElement("select", { value: editingBooking.paymentMode, onChange: (event) => setEditingBooking({ ...editingBooking, paymentMode: event.target.value }), className: "mt-1.5 w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm" }, /* @__PURE__ */ React.createElement("option", null, "Cash on Check-in"), /* @__PURE__ */ React.createElement("option", null, "Pay Online"))), /* @__PURE__ */ React.createElement("label", { className: "block text-xs font-bold text-slate-600" }, "Status", /* @__PURE__ */ React.createElement("select", { value: editingBooking.status, onChange: (event) => setEditingBooking({ ...editingBooking, status: event.target.value }), className: "mt-1.5 w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm" }, /* @__PURE__ */ React.createElement("option", null, "Confirmed"), /* @__PURE__ */ React.createElement("option", null, "Checked-In"), /* @__PURE__ */ React.createElement("option", null, "Completed"), /* @__PURE__ */ React.createElement("option", null, "Cancelled"))), /* @__PURE__ */ React.createElement("label", { className: "block sm:col-span-2 text-xs font-bold text-slate-600" }, "Notes", /* @__PURE__ */ React.createElement("textarea", { rows: "3", value: editingBooking.notes || "", onChange: (event) => setEditingBooking({ ...editingBooking, notes: event.target.value }), className: "mt-1.5 w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm" })), /* @__PURE__ */ React.createElement("div", { className: "sm:col-span-2 flex justify-end gap-3 pt-3" }, /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => setEditingBooking(null), className: "px-5 py-2.5 border border-slate-200 rounded-lg text-sm font-bold text-slate-600" }, "Cancel"), /* @__PURE__ */ React.createElement("button", { type: "submit", className: "px-5 py-2.5 bg-forest-900 text-white rounded-lg text-sm font-bold" }, "Save Booking")))))));
 }
-function BookingEngineModal({ rooms, selectedRoom, initialDates, coupons, onClose, onConfirmBooking }) {
+function BookingEngineModal({ rooms, selectedRoom, initialDates, coupons, razorpayKeyId, onClose, onConfirmBooking }) {
   const [currentRoom, setCurrentRoom] = useState(selectedRoom || rooms[0]);
   const [selectedMealPlan, setSelectedMealPlan] = useState((selectedRoom || rooms[0])?.mealPlans?.[0] || "");
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [formData, setFormData] = useState({
     guestName: "",
     email: "",
@@ -1761,7 +1775,7 @@ function BookingEngineModal({ rooms, selectedRoom, initialDates, coupons, onClos
   const appliedCoupon = eligibleCoupons.find((coupon) => coupon.code.toUpperCase() === formData.couponCode.trim().toUpperCase());
   const discountAmount = appliedCoupon ? Math.min(subtotal, appliedCoupon.discountType === "fixed" ? Number(appliedCoupon.discountValue) : Math.round(subtotal * Number(appliedCoupon.discountValue) / 100)) : 0;
   const totalAmount = subtotal - discountAmount;
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.guestName || !formData.email || !formData.phone || !formData.whatsapp) {
       alert("Please provide your name, email, contact number, and WhatsApp number.");
@@ -1781,7 +1795,29 @@ function BookingEngineModal({ rooms, selectedRoom, initialDates, coupons, onClos
       paymentMode: formData.paymentMode,
       notes: `${formData.specialRequests || ""} [Rate Plan: ${selectedMealPlan}] [WhatsApp: ${formData.whatsapp}] ${appliedCoupon ? `[Coupon: ${appliedCoupon.code}, -Rs ${discountAmount}]` : ""} ${formData.addRafting ? "[+Rafting]" : ""} ${formData.addScooty ? "[+Scooty]" : ""}`.trim()
     };
-    onConfirmBooking(newBooking);
+    if (formData.paymentMode !== "Pay Online") {
+      onConfirmBooking(newBooking);
+      return;
+    }
+    if (!API_ENABLED || !razorpayKeyId) {
+      alert("Online payment is not configured yet. Please choose Cash on Check-in or contact the property.");
+      return;
+    }
+    try {
+      setIsProcessingPayment(true);
+      const order = await apiRequest("payment", { method: "POST", body: { amount: totalAmount * 100, receipt: newBooking.id } });
+      await loadRazorpayCheckout();
+      const payment = await new Promise((resolve, reject) => {
+        const checkout = new window.Razorpay({ key: order.keyId, amount: order.amount, currency: order.currency, name: "Checkinn Homes", description: `${currentRoom.name} - ${selectedMealPlan}`, order_id: order.orderId, prefill: { name: formData.guestName, email: formData.email, contact: formData.phone }, theme: { color: "#0c3b2e" }, handler: resolve, modal: { ondismiss: () => reject(new Error("Payment was cancelled.")) } });
+        checkout.open();
+      });
+      await apiRequest("payment", { method: "PUT", body: { orderId: payment.razorpay_order_id, paymentId: payment.razorpay_payment_id, signature: payment.razorpay_signature } });
+      onConfirmBooking({ ...newBooking, paymentMode: "Pay Online - Paid", notes: `${newBooking.notes} [Razorpay Payment: ${payment.razorpay_payment_id}]` });
+    } catch (error) {
+      alert(error.message || "Online payment could not be completed.");
+    } finally {
+      setIsProcessingPayment(false);
+    }
   };
   return /* @__PURE__ */ React.createElement("div", { className: "fixed inset-0 z-50 bg-forest-950/70 backdrop-blur-md flex items-start sm:items-center justify-center p-3 sm:p-4 overflow-hidden" }, /* @__PURE__ */ React.createElement("div", { className: "bg-white rounded-3xl max-w-3xl w-full max-h-[calc(100dvh-1.5rem)] overflow-y-auto p-6 sm:p-8 shadow-2xl border border-stone-200 relative" }, /* @__PURE__ */ React.createElement(
     "button",
@@ -1865,7 +1901,7 @@ function BookingEngineModal({ rooms, selectedRoom, initialDates, coupons, onClos
   )), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "block text-xs font-bold uppercase text-stone-500 mb-1" }, "WhatsApp Number *"), /* @__PURE__ */ React.createElement("input", { type: "tel", placeholder: "e.g. +91 98765 00000", value: formData.whatsapp, onChange: (e) => setFormData({ ...formData, whatsapp: e.target.value }), className: "w-full px-4 py-2.5 rounded-xl border border-stone-200 text-sm font-medium bg-stone-50/50 focus:outline-none focus:ring-2 focus:ring-forest-800", required: true }), /* @__PURE__ */ React.createElement("label", { className: "mt-2 flex items-center gap-2 text-xs text-stone-600" }, /* @__PURE__ */ React.createElement("input", { type: "checkbox", checked: formData.whatsappSameAsPhone, onChange: (e) => {
     const same = e.target.checked;
     setFormData({ ...formData, whatsappSameAsPhone: same, whatsapp: same ? formData.phone : formData.whatsapp });
-  } }), " Same as contact number"))), /* @__PURE__ */ React.createElement("div", { className: "rounded-2xl border border-stone-200 p-4 space-y-3" }, /* @__PURE__ */ React.createElement("span", { className: "block text-xs font-bold uppercase text-stone-500" }, "Payment Option"), /* @__PURE__ */ React.createElement("div", { className: "grid grid-cols-1 sm:grid-cols-2 gap-2" }, /* @__PURE__ */ React.createElement("label", { className: `p-3 rounded-xl border cursor-pointer text-sm font-bold ${formData.paymentMode === "Cash on Check-in" ? "border-forest-900 bg-forest-50" : "border-stone-200"}` }, /* @__PURE__ */ React.createElement("input", { type: "radio", name: "payment", checked: formData.paymentMode === "Cash on Check-in", onChange: () => setFormData({ ...formData, paymentMode: "Cash on Check-in", couponCode: "" }), className: "mr-2" }), "Cash on Check-in"), /* @__PURE__ */ React.createElement("label", { className: `p-3 rounded-xl border cursor-pointer text-sm font-bold ${formData.paymentMode === "Pay Online" ? "border-forest-900 bg-forest-50" : "border-stone-200"}` }, /* @__PURE__ */ React.createElement("input", { type: "radio", name: "payment", checked: formData.paymentMode === "Pay Online", onChange: () => setFormData({ ...formData, paymentMode: "Pay Online" }), className: "mr-2" }), "Pay Online")), formData.paymentMode === "Pay Online" && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "block text-xs font-bold uppercase text-stone-500 mb-1" }, "Coupon Code"), /* @__PURE__ */ React.createElement("input", { list: "booking-coupons", value: formData.couponCode, onChange: (e) => setFormData({ ...formData, couponCode: e.target.value.toUpperCase() }), placeholder: eligibleCoupons.length ? "Enter or select a coupon" : "No coupon currently eligible", className: "w-full px-4 py-2.5 rounded-xl border border-stone-200 text-sm" }), /* @__PURE__ */ React.createElement("datalist", { id: "booking-coupons" }, eligibleCoupons.map((coupon) => /* @__PURE__ */ React.createElement("option", { key: coupon.id, value: coupon.code }, coupon.discountType === "fixed" ? `Rs ${coupon.discountValue} off` : `${coupon.discountValue}% off`))), appliedCoupon && /* @__PURE__ */ React.createElement("p", { className: "mt-2 text-xs font-bold text-emerald-700" }, appliedCoupon.code, " applied: Rs ", discountAmount.toLocaleString("en-IN"), " saved"))), /* @__PURE__ */ React.createElement("div", { className: "space-y-2" }, /* @__PURE__ */ React.createElement("span", { className: "block text-xs font-bold uppercase text-stone-500" }, "Rishikesh Add-On Experiences (Optional)"), /* @__PURE__ */ React.createElement("div", { className: "grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs" }, /* @__PURE__ */ React.createElement("label", { className: "flex items-center gap-2.5 p-3 rounded-xl border border-stone-200 cursor-pointer hover:bg-stone-50" }, /* @__PURE__ */ React.createElement(
+  } }), " Same as contact number"))), /* @__PURE__ */ React.createElement("div", { className: "rounded-2xl border border-stone-200 p-4 space-y-3" }, /* @__PURE__ */ React.createElement("span", { className: "block text-xs font-bold uppercase text-stone-500" }, "Payment Option"), /* @__PURE__ */ React.createElement("div", { className: "grid grid-cols-1 sm:grid-cols-2 gap-2" }, /* @__PURE__ */ React.createElement("label", { className: `p-3 rounded-xl border cursor-pointer text-sm font-bold ${formData.paymentMode === "Cash on Check-in" ? "border-forest-900 bg-forest-50" : "border-stone-200"}` }, /* @__PURE__ */ React.createElement("input", { type: "radio", name: "payment", checked: formData.paymentMode === "Cash on Check-in", onChange: () => setFormData({ ...formData, paymentMode: "Cash on Check-in", couponCode: "" }), className: "mr-2" }), "Cash on Check-in"), /* @__PURE__ */ React.createElement("label", { className: `p-3 rounded-xl border cursor-pointer text-sm font-bold ${formData.paymentMode === "Pay Online" ? "border-forest-900 bg-forest-50" : "border-stone-200"}` }, /* @__PURE__ */ React.createElement("input", { type: "radio", name: "payment", checked: formData.paymentMode === "Pay Online", onChange: () => setFormData({ ...formData, paymentMode: "Pay Online" }), className: "mr-2" }), "Pay Online")), formData.paymentMode === "Pay Online" && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "block text-xs font-bold uppercase text-stone-500 mb-1" }, "Coupon Code"), /* @__PURE__ */ React.createElement("input", { list: "booking-coupons", value: formData.couponCode, onChange: (e) => setFormData({ ...formData, couponCode: e.target.value.toUpperCase() }), placeholder: eligibleCoupons.length ? "Enter or select a coupon" : "No coupon currently eligible", className: "w-full px-4 py-2.5 rounded-xl border border-stone-200 text-sm" }), /* @__PURE__ */ React.createElement("datalist", { id: "booking-coupons" }, eligibleCoupons.map((coupon) => /* @__PURE__ */ React.createElement("option", { key: coupon.id, value: coupon.code }, coupon.discountType === "fixed" ? `Rs ${coupon.discountValue} off` : `${coupon.discountValue}% off`))), eligibleCoupons.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2" }, eligibleCoupons.map((coupon) => /* @__PURE__ */ React.createElement("button", { type: "button", key: coupon.id, onClick: () => setFormData({ ...formData, couponCode: coupon.code }), className: `text-left p-3 rounded-xl border transition ${formData.couponCode === coupon.code ? "border-forest-900 bg-forest-50" : "border-stone-200 hover:border-emerald-500"}` }, /* @__PURE__ */ React.createElement("span", { className: "block text-sm font-bold text-forest-950" }, coupon.code), /* @__PURE__ */ React.createElement("span", { className: "block mt-1 text-xs text-emerald-700" }, coupon.discountType === "fixed" ? `Rs ${coupon.discountValue} off` : `${coupon.discountValue}% off`, " on Rs ", Number(coupon.minimumAmount).toLocaleString("en-IN"), "+")))), appliedCoupon && /* @__PURE__ */ React.createElement("p", { className: "mt-2 text-xs font-bold text-emerald-700" }, appliedCoupon.code, " applied: Rs ", discountAmount.toLocaleString("en-IN"), " saved"))), /* @__PURE__ */ React.createElement("div", { className: "space-y-2" }, /* @__PURE__ */ React.createElement("span", { className: "block text-xs font-bold uppercase text-stone-500" }, "Rishikesh Add-On Experiences (Optional)"), /* @__PURE__ */ React.createElement("div", { className: "grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs" }, /* @__PURE__ */ React.createElement("label", { className: "flex items-center gap-2.5 p-3 rounded-xl border border-stone-200 cursor-pointer hover:bg-stone-50" }, /* @__PURE__ */ React.createElement(
     "input",
     {
       type: "checkbox",
@@ -1885,9 +1921,10 @@ function BookingEngineModal({ rooms, selectedRoom, initialDates, coupons, onClos
     "button",
     {
       type: "submit",
-      className: "w-full sm:w-auto px-8 py-3.5 bg-amber-500 hover:bg-amber-600 text-forest-950 font-bold rounded-xl shadow-lg transition transform active:scale-95 text-sm"
+      disabled: isProcessingPayment,
+      className: "w-full sm:w-auto px-8 py-3.5 bg-amber-500 hover:bg-amber-600 disabled:opacity-60 text-forest-950 font-bold rounded-xl shadow-lg transition transform active:scale-95 text-sm"
     },
-    "Confirm Instant Booking \u2794"
+    isProcessingPayment ? "Opening Payment..." : formData.paymentMode === "Pay Online" ? "Pay Securely \u2794" : "Confirm Instant Booking \u2794"
   )))));
 }
 function RoomDetailModal({ room, onClose, onBookNow }) {
