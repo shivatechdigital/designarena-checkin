@@ -1871,7 +1871,7 @@
       const [adminLoginError, setAdminLoginError] = useState('');
       const [adminLoginForm, setAdminLoginForm] = useState({ email: '', password: '', remember: true });
       const [apiConnectionStatus, setApiConnectionStatus] = useState('idle');
-      const [couponDraft, setCouponDraft] = useState({ code: '', discountPercent: 10, minimumAmount: 0, active: true });
+      const [couponDraft, setCouponDraft] = useState({ code: '', discountType: 'percentage', discountValue: 10, minimumAmount: 0, active: true });
       const [editingCouponId, setEditingCouponId] = useState(null);
 
       // Room Editor Modal state
@@ -2188,7 +2188,7 @@
           const payload = isEditing ? { ...couponDraft, id: editingCouponId } : couponDraft;
           const coupon = API_ENABLED ? await apiRequest('coupons', { method: isEditing ? 'PUT' : 'POST', body: payload }) : { ...payload, id: isEditing ? editingCouponId : Date.now(), code: couponDraft.code.toUpperCase() };
           setCoupons(isEditing ? coupons.map((item) => item.id === coupon.id ? coupon : item) : [coupon, ...coupons]);
-          setCouponDraft({ code: '', discountPercent: 10, minimumAmount: 0, active: true });
+          setCouponDraft({ code: '', discountType: 'percentage', discountValue: 10, minimumAmount: 0, active: true });
           setEditingCouponId(null);
           showToast(isEditing ? 'Coupon updated.' : 'Coupon added and published.');
         } catch (error) { showToast(error.message, 'error'); }
@@ -2196,7 +2196,7 @@
 
       const startEditingCoupon = (coupon) => {
         setEditingCouponId(coupon.id);
-        setCouponDraft({ code: coupon.code, discountPercent: coupon.discountPercent, minimumAmount: coupon.minimumAmount, active: coupon.active });
+        setCouponDraft({ code: coupon.code, discountType: coupon.discountType || 'percentage', discountValue: coupon.discountValue ?? coupon.discountPercent, minimumAmount: coupon.minimumAmount, active: coupon.active });
       };
 
       const deleteCoupon = async (couponId) => {
@@ -2804,11 +2804,12 @@
                 <div className="mb-7"><h3 className="text-xl font-extrabold text-forest-950">Booking Coupons</h3><p className="text-xs text-slate-500 mt-1">Shown only for eligible Pay Online bookings.</p></div>
                 <form onSubmit={addCoupon} className="grid grid-cols-1 sm:grid-cols-4 gap-3 p-4 bg-slate-50 border border-slate-100 rounded-lg mb-6">
                   <input value={couponDraft.code} onChange={(event) => setCouponDraft({ ...couponDraft, code: event.target.value.toUpperCase() })} placeholder="Code e.g. STAY10" className="px-3 py-2.5 border border-slate-200 rounded-lg text-sm" required />
-                  <input type="number" min="1" max="100" value={couponDraft.discountPercent} onChange={(event) => setCouponDraft({ ...couponDraft, discountPercent: Number(event.target.value) })} placeholder="Discount %" className="px-3 py-2.5 border border-slate-200 rounded-lg text-sm" required />
+                  <select value={couponDraft.discountType} onChange={(event) => setCouponDraft({ ...couponDraft, discountType: event.target.value })} className="px-3 py-2.5 border border-slate-200 rounded-lg text-sm"><option value="percentage">Percentage</option><option value="fixed">Flat Amount</option></select>
+                  <input type="number" min="1" max={couponDraft.discountType === 'percentage' ? '100' : undefined} value={couponDraft.discountValue} onChange={(event) => setCouponDraft({ ...couponDraft, discountValue: Number(event.target.value) })} placeholder={couponDraft.discountType === 'percentage' ? 'Discount %' : 'Discount Rs'} className="px-3 py-2.5 border border-slate-200 rounded-lg text-sm" required />
                   <input type="number" min="0" value={couponDraft.minimumAmount} onChange={(event) => setCouponDraft({ ...couponDraft, minimumAmount: Number(event.target.value) })} placeholder="Minimum amount" className="px-3 py-2.5 border border-slate-200 rounded-lg text-sm" required />
-                  <div className="flex gap-2"><button type="submit" className="bg-forest-900 text-white px-4 py-2.5 rounded-lg text-sm font-bold">{editingCouponId !== null ? 'Save Coupon' : 'Add Coupon'}</button>{editingCouponId !== null && <button type="button" onClick={() => { setEditingCouponId(null); setCouponDraft({ code: '', discountPercent: 10, minimumAmount: 0, active: true }); }} className="border border-slate-200 bg-white px-3 py-2.5 rounded-lg text-sm">Cancel</button>}</div>
+                  <div className="flex gap-2"><button type="submit" className="bg-forest-900 text-white px-4 py-2.5 rounded-lg text-sm font-bold">{editingCouponId !== null ? 'Save Coupon' : 'Add Coupon'}</button>{editingCouponId !== null && <button type="button" onClick={() => { setEditingCouponId(null); setCouponDraft({ code: '', discountType: 'percentage', discountValue: 10, minimumAmount: 0, active: true }); }} className="border border-slate-200 bg-white px-3 py-2.5 rounded-lg text-sm">Cancel</button>}</div>
                 </form>
-                <div className="space-y-2">{coupons.length === 0 ? <p className="text-sm text-slate-400 py-5">No coupons added yet.</p> : coupons.map((coupon) => <div key={coupon.id} className="flex items-center justify-between gap-3 p-4 border border-slate-200 rounded-lg"><span className="font-bold text-forest-950">{coupon.code}</span><span className="text-xs text-slate-500">{coupon.discountPercent}% off on Rs {Number(coupon.minimumAmount).toLocaleString('en-IN')}+</span><div className="flex gap-3"><button onClick={() => startEditingCoupon(coupon)} className="text-xs font-bold text-emerald-700">Edit</button><button onClick={() => deleteCoupon(coupon.id)} className="text-xs font-bold text-red-600">Delete</button></div></div>)}</div>
+                <div className="space-y-2">{coupons.length === 0 ? <p className="text-sm text-slate-400 py-5">No coupons added yet.</p> : coupons.map((coupon) => <div key={coupon.id} className="flex items-center justify-between gap-3 p-4 border border-slate-200 rounded-lg"><span className="font-bold text-forest-950">{coupon.code}</span><span className="text-xs text-slate-500">{coupon.discountType === 'fixed' ? `Rs ${coupon.discountValue} off` : `${coupon.discountValue}% off`} on Rs {Number(coupon.minimumAmount).toLocaleString('en-IN')}+</span><div className="flex gap-3"><button onClick={() => startEditingCoupon(coupon)} className="text-xs font-bold text-emerald-700">Edit</button><button onClick={() => deleteCoupon(coupon.id)} className="text-xs font-bold text-red-600">Delete</button></div></div>)}</div>
               </div>
             )}
 
@@ -3089,7 +3090,7 @@
 
       const eligibleCoupons = coupons.filter((coupon) => coupon.active && subtotal >= Number(coupon.minimumAmount || 0));
       const appliedCoupon = eligibleCoupons.find((coupon) => coupon.code.toUpperCase() === formData.couponCode.trim().toUpperCase());
-      const discountAmount = appliedCoupon ? Math.round(subtotal * Number(appliedCoupon.discountPercent) / 100) : 0;
+      const discountAmount = appliedCoupon ? Math.min(subtotal, appliedCoupon.discountType === 'fixed' ? Number(appliedCoupon.discountValue) : Math.round(subtotal * Number(appliedCoupon.discountValue) / 100)) : 0;
       const totalAmount = subtotal - discountAmount;
 
       const handleSubmit = (e) => {
@@ -3244,7 +3245,7 @@
               <div className="rounded-2xl border border-stone-200 p-4 space-y-3">
                 <span className="block text-xs font-bold uppercase text-stone-500">Payment Option</span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2"><label className={`p-3 rounded-xl border cursor-pointer text-sm font-bold ${formData.paymentMode === 'Cash on Check-in' ? 'border-forest-900 bg-forest-50' : 'border-stone-200'}`}><input type="radio" name="payment" checked={formData.paymentMode === 'Cash on Check-in'} onChange={() => setFormData({...formData, paymentMode: 'Cash on Check-in', couponCode: ''})} className="mr-2" />Cash on Check-in</label><label className={`p-3 rounded-xl border cursor-pointer text-sm font-bold ${formData.paymentMode === 'Pay Online' ? 'border-forest-900 bg-forest-50' : 'border-stone-200'}`}><input type="radio" name="payment" checked={formData.paymentMode === 'Pay Online'} onChange={() => setFormData({...formData, paymentMode: 'Pay Online'})} className="mr-2" />Pay Online</label></div>
-                {formData.paymentMode === 'Pay Online' && <div><label className="block text-xs font-bold uppercase text-stone-500 mb-1">Coupon Code</label><input list="booking-coupons" value={formData.couponCode} onChange={(e) => setFormData({...formData, couponCode: e.target.value.toUpperCase()})} placeholder={eligibleCoupons.length ? 'Enter or select a coupon' : 'No coupon currently eligible'} className="w-full px-4 py-2.5 rounded-xl border border-stone-200 text-sm" /><datalist id="booking-coupons">{eligibleCoupons.map((coupon) => <option key={coupon.id} value={coupon.code}>{coupon.discountPercent}% off</option>)}</datalist>{appliedCoupon && <p className="mt-2 text-xs font-bold text-emerald-700">{appliedCoupon.code} applied: Rs {discountAmount.toLocaleString('en-IN')} saved</p>}</div>}
+                {formData.paymentMode === 'Pay Online' && <div><label className="block text-xs font-bold uppercase text-stone-500 mb-1">Coupon Code</label><input list="booking-coupons" value={formData.couponCode} onChange={(e) => setFormData({...formData, couponCode: e.target.value.toUpperCase()})} placeholder={eligibleCoupons.length ? 'Enter or select a coupon' : 'No coupon currently eligible'} className="w-full px-4 py-2.5 rounded-xl border border-stone-200 text-sm" /><datalist id="booking-coupons">{eligibleCoupons.map((coupon) => <option key={coupon.id} value={coupon.code}>{coupon.discountType === 'fixed' ? `Rs ${coupon.discountValue} off` : `${coupon.discountValue}% off`}</option>)}</datalist>{appliedCoupon && <p className="mt-2 text-xs font-bold text-emerald-700">{appliedCoupon.code} applied: Rs {discountAmount.toLocaleString('en-IN')} saved</p>}</div>}
               </div>
 
               {/* Optional Experiences */}

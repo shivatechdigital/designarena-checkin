@@ -12,7 +12,7 @@ try {
         $rooms = array_map('room_from_row', db()->query('SELECT * FROM rooms ORDER BY created_at, id')->fetchAll());
         $types = array_column(db()->query('SELECT name FROM room_types ORDER BY name')->fetchAll(), 'name');
         $reviews = array_map('review_from_row', db()->query('SELECT * FROM reviews WHERE approved=1 ORDER BY created_at DESC')->fetchAll());
-        $coupons = array_map('coupon_from_row', db()->query('SELECT * FROM coupons WHERE active=1 ORDER BY discount_percent DESC')->fetchAll());
+        $coupons = array_map('coupon_from_row', db()->query('SELECT * FROM coupons WHERE active=1 ORDER BY discount_value DESC')->fetchAll());
         $response = ['rooms' => $rooms, 'roomTypes' => $types, 'reviews' => $reviews, 'coupons' => $coupons, 'hotelConfig' => settings_data()];
         if (is_admin()) {
             $response['bookings'] = array_map('booking_from_row', db()->query('SELECT * FROM bookings ORDER BY created_at DESC')->fetchAll());
@@ -117,16 +117,22 @@ try {
         if ($method === 'GET') json_response(array_map('coupon_from_row', db()->query('SELECT * FROM coupons ORDER BY created_at DESC')->fetchAll()));
         require_admin();
         if ($method === 'POST') {
-            require_fields($body, ['code', 'discountPercent']);
-            $stmt = db()->prepare('INSERT INTO coupons (code,discount_percent,minimum_amount,active) VALUES (?,?,?,?)');
-            $stmt->execute([strtoupper(trim((string)$body['code'])), (int)$body['discountPercent'], (int)($body['minimumAmount'] ?? 0), !empty($body['active']) ? 1 : 0]);
+            require_fields($body, ['code', 'discountType', 'discountValue']);
+            $discountType = $body['discountType'] === 'fixed' ? 'fixed' : 'percentage';
+            $discountValue = (int)$body['discountValue'];
+            if ($discountValue < 1 || ($discountType === 'percentage' && $discountValue > 100)) json_response(['error' => 'Enter a valid discount value.'], 422);
+            $stmt = db()->prepare('INSERT INTO coupons (code,discount_type,discount_value,minimum_amount,active) VALUES (?,?,?,?,?)');
+            $stmt->execute([strtoupper(trim((string)$body['code'])), $discountType, $discountValue, (int)($body['minimumAmount'] ?? 0), !empty($body['active']) ? 1 : 0]);
             $stmt = db()->prepare('SELECT * FROM coupons WHERE id=?'); $stmt->execute([(int)db()->lastInsertId()]);
             json_response(coupon_from_row($stmt->fetch()), 201);
         }
                 if ($method === 'PUT') {
-                        require_fields($body, ['id', 'code', 'discountPercent']);
-                        $stmt = db()->prepare('UPDATE coupons SET code=?, discount_percent=?, minimum_amount=?, active=? WHERE id=?');
-                        $stmt->execute([strtoupper(trim((string)$body['code'])), (int)$body['discountPercent'], (int)($body['minimumAmount'] ?? 0), !empty($body['active']) ? 1 : 0, (int)$body['id']]);
+                    require_fields($body, ['id', 'code', 'discountType', 'discountValue']);
+                    $discountType = $body['discountType'] === 'fixed' ? 'fixed' : 'percentage';
+                    $discountValue = (int)$body['discountValue'];
+                    if ($discountValue < 1 || ($discountType === 'percentage' && $discountValue > 100)) json_response(['error' => 'Enter a valid discount value.'], 422);
+                    $stmt = db()->prepare('UPDATE coupons SET code=?, discount_type=?, discount_value=?, minimum_amount=?, active=? WHERE id=?');
+                    $stmt->execute([strtoupper(trim((string)$body['code'])), $discountType, $discountValue, (int)($body['minimumAmount'] ?? 0), !empty($body['active']) ? 1 : 0, (int)$body['id']]);
                         $stmt = db()->prepare('SELECT * FROM coupons WHERE id=?'); $stmt->execute([(int)$body['id']]);
                         json_response(coupon_from_row($stmt->fetch()));
                 }

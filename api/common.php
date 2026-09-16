@@ -137,7 +137,8 @@ function coupon_from_row(array $row): array
 {
     return [
         'id' => (int)$row['id'], 'code' => $row['code'],
-        'discountPercent' => (int)$row['discount_percent'],
+        'discountType' => $row['discount_type'],
+        'discountValue' => (int)$row['discount_value'],
         'minimumAmount' => (int)$row['minimum_amount'], 'active' => (bool)$row['active'],
     ];
 }

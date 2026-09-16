@@ -72,9 +72,9 @@ try {
         $settingStmt->execute([$key, $value]);
     }
 
-    $couponStmt = db()->prepare('INSERT IGNORE INTO coupons (code, discount_percent, minimum_amount, active) VALUES (?, ?, ?, 1)');
-    $couponStmt->execute(['WELCOME10', 10, 3000]);
-    $couponStmt->execute(['STAY15', 15, 8000]);
+    $couponStmt = db()->prepare('INSERT IGNORE INTO coupons (code, discount_type, discount_value, minimum_amount, active) VALUES (?, ?, ?, ?, 1)');
+    $couponStmt->execute(['WELCOME10', 'percentage', 10, 3000]);
+    $couponStmt->execute(['STAY15', 'percentage', 15, 8000]);
 
     json_response([
         'ok' => true,

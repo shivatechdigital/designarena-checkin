@@ -59,8 +59,17 @@ After uploading the latest files, create the new coupons table in phpMyAdmin by 
 To add the starter coupons without re-running the full installer, run this SQL in phpMyAdmin:
 
 ```sql
-INSERT IGNORE INTO coupons (code, discount_percent, minimum_amount, active)
-VALUES ('WELCOME10', 10, 3000, 1), ('STAY15', 15, 8000, 1);
+INSERT IGNORE INTO coupons (code, discount_type, discount_value, minimum_amount, active)
+VALUES ('WELCOME10', 'percentage', 10, 3000, 1), ('STAY15', 'percentage', 15, 8000, 1);
+```
+
+If `coupons` was created by an earlier release, run this one-time migration before adding or editing coupons:
+
+```sql
+ALTER TABLE coupons
+  ADD COLUMN discount_type ENUM('percentage','fixed') NOT NULL DEFAULT 'percentage' AFTER code,
+  ADD COLUMN discount_value INT UNSIGNED NOT NULL DEFAULT 0 AFTER discount_type;
+UPDATE coupons SET discount_value = discount_percent WHERE discount_value = 0;
 ```
 
 The current release saves the guest's payment choice and applies eligible coupons. For real online payment, connect a payment gateway such as Razorpay before advertising payment collection. Email confirmations use PHP `mail()` and require Hostinger mail to be configured. WhatsApp confirmations require an approved WhatsApp Business API provider (for example Meta Cloud API, Interakt, or WATI); the editable WhatsApp template is stored in Property Settings for that provider integration.
