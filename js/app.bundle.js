@@ -1783,11 +1783,11 @@ function BookingEngineModal({ rooms, selectedRoom, initialDates, coupons, onClos
     };
     onConfirmBooking(newBooking);
   };
-  return /* @__PURE__ */ React.createElement("div", { className: "fixed inset-0 z-50 bg-forest-950/70 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto" }, /* @__PURE__ */ React.createElement("div", { className: "bg-white rounded-3xl max-w-3xl w-full p-6 sm:p-8 shadow-2xl border border-stone-200 relative my-8" }, /* @__PURE__ */ React.createElement(
+  return /* @__PURE__ */ React.createElement("div", { className: "fixed inset-0 z-50 bg-forest-950/70 backdrop-blur-md flex items-start sm:items-center justify-center p-3 sm:p-4 overflow-hidden" }, /* @__PURE__ */ React.createElement("div", { className: "bg-white rounded-3xl max-w-3xl w-full max-h-[calc(100dvh-1.5rem)] overflow-y-auto p-6 sm:p-8 shadow-2xl border border-stone-200 relative" }, /* @__PURE__ */ React.createElement(
     "button",
     {
       onClick: onClose,
-      className: "absolute top-5 right-5 w-9 h-9 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 font-bold flex items-center justify-center text-sm transition"
+      className: "sticky top-0 z-10 ml-auto -mt-2 -mr-2 w-9 h-9 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 font-bold flex items-center justify-center text-sm transition shadow-sm"
     },
     "\u2715"
   ), /* @__PURE__ */ React.createElement("div", { className: "mb-6" }, /* @__PURE__ */ React.createElement("span", { className: "text-amber-600 font-bold text-xs uppercase tracking-widest" }, "Instant Reservation"), /* @__PURE__ */ React.createElement("h2", { className: "font-serif text-2xl sm:text-3xl font-bold text-forest-950 mt-0.5" }, "Book Your Rishikesh Sanctuary"), /* @__PURE__ */ React.createElement("p", { className: "text-xs text-stone-500" }, "No advance payment required for direct website reservations.")), /* @__PURE__ */ React.createElement("form", { onSubmit: handleSubmit, className: "space-y-6" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "block text-xs font-bold uppercase text-stone-500 mb-2" }, "Select Preferred Room"), /* @__PURE__ */ React.createElement("div", { className: "grid grid-cols-2 sm:grid-cols-4 gap-2" }, rooms.map((r) => /* @__PURE__ */ React.createElement(

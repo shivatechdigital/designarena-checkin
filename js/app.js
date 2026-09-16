@@ -3284,13 +3284,13 @@
       };
 
       return (
-        <div className="fixed inset-0 z-50 bg-forest-950/70 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-          <div className="bg-white rounded-3xl max-w-3xl w-full p-6 sm:p-8 shadow-2xl border border-stone-200 relative my-8">
+        <div className="fixed inset-0 z-50 bg-forest-950/70 backdrop-blur-md flex items-start sm:items-center justify-center p-3 sm:p-4 overflow-hidden">
+          <div className="bg-white rounded-3xl max-w-3xl w-full max-h-[calc(100dvh-1.5rem)] overflow-y-auto p-6 sm:p-8 shadow-2xl border border-stone-200 relative">
             
             {/* Close Button */}
             <button 
               onClick={onClose}
-              className="absolute top-5 right-5 w-9 h-9 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 font-bold flex items-center justify-center text-sm transition"
+              className="sticky top-0 z-10 ml-auto -mt-2 -mr-2 w-9 h-9 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 font-bold flex items-center justify-center text-sm transition shadow-sm"
             >
               ✕
             </button>
