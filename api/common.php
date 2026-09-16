@@ -159,6 +159,35 @@ function send_booking_confirmation(array $booking): bool
     return mail($booking['email'], $subject, $body, implode("\r\n", $headers));
 }
 
+function notify_n8n_booking(array $booking): bool
+{
+    if (N8N_BOOKING_WEBHOOK_URL === '') {
+        return false;
+    }
+    $payload = json_encode([
+        'bookingId' => $booking['id'], 'guestName' => $booking['guestName'],
+        'email' => $booking['email'], 'phone' => $booking['phone'],
+        'whatsapp' => preg_match('/\[WhatsApp:\s*([^\]]+)\]/', (string)$booking['notes'], $matches) ? trim($matches[1]) : $booking['phone'],
+        'roomName' => $booking['roomName'], 'checkIn' => $booking['checkIn'],
+        'checkOut' => $booking['checkOut'], 'guests' => $booking['guests'],
+        'totalAmount' => $booking['totalAmount'], 'paymentMode' => $booking['paymentMode'],
+        'notes' => $booking['notes'], 'createdAt' => $booking['createdAt'],
+    ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+    if ($payload === false) {
+        return false;
+    }
+    $headers = ['Content-Type: application/json'];
+    if (N8N_WEBHOOK_SECRET !== '') {
+        $headers[] = 'X-Webhook-Secret: ' . N8N_WEBHOOK_SECRET;
+    }
+    $curl = curl_init(N8N_BOOKING_WEBHOOK_URL);
+    curl_setopt_array($curl, [CURLOPT_POST => true, CURLOPT_RETURNTRANSFER => true, CURLOPT_CONNECTTIMEOUT => 5, CURLOPT_TIMEOUT => 10, CURLOPT_HTTPHEADER => $headers, CURLOPT_POSTFIELDS => $payload]);
+    $response = curl_exec($curl);
+    $status = (int)curl_getinfo($curl, CURLINFO_HTTP_CODE);
+    curl_close($curl);
+    return $response !== false && $status >= 200 && $status < 300;
+}
+
 function query_from_row(array $row): array
 {
     return [

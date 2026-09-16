@@ -152,6 +152,7 @@ try {
             $stmt = db()->prepare('SELECT * FROM bookings WHERE id=?'); $stmt->execute([$body['id']]);
             $booking = booking_from_row($stmt->fetch());
             $booking['emailSent'] = send_booking_confirmation($booking);
+            $booking['n8nNotified'] = notify_n8n_booking($booking);
             json_response($booking, 201);
         }
         require_admin();
