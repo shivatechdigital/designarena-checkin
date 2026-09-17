@@ -20,6 +20,6 @@ const RAZORPAY_KEY_ID = 'rzp_test_TWfmtduM73FYlO';
 const RAZORPAY_KEY_SECRET = 'Ye2XcRi2feiP6Jh4MY8AunO6';
 
 // n8n test webhook. Use the production /webhook/ URL after publishing the workflow.
-const N8N_BOOKING_WEBHOOK_URL = 'https://n8n.shivatechdigital.com/webhook-test/checkinn-booking';
+const N8N_BOOKING_WEBHOOK_URL = 'https://n8n.shivatechdigital.com/webhook/checkinn-booking';
 // Paste the same value configured in n8n Header Auth directly here. Never expose it in JavaScript.
 const N8N_WEBHOOK_SECRET = 'Password!234';
